@@ -1,0 +1,9 @@
+program testeErro
+var
+  x, y : integer
+begin
+  x := 10
+  y := x + z;
+  read(x y);
+  write(x, y@);
+end
