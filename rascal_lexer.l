@@ -9,7 +9,7 @@ enum {
     TOK_WHILE=266, TOK_DO=267, TOK_IF=268, TOK_THEN=269, TOK_ELSE=270,
     TOK_READ=271, TOK_WRITE=272, TOK_AND=273, TOK_OR=274, TOK_NOT=275,
     TOK_DIV=276, TOK_DIF=277, TOK_MENIG=278, TOK_MAIIG=279, TOK_ATRI=280,
-    TOK_NUM=281, TOK_ID=282, TOK_ERR=283};
+    TOK_NUM=281, TOK_ID=282};
 
 char lexema[100];
 %}
@@ -70,7 +70,7 @@ NUM         {DIGITO}*
 
 {ESPACO}            /* Ignorar espaços, tabulações e quebras de linha */
 
-.                   {strcpy(lexema, "ERRO!"); return TOK_ERR;}
+.                   {printf("ERRO LÉXICO na linha %d: símbolo ilegal %c\n", yylineno, yytext[0]);}
 
 %%
 
