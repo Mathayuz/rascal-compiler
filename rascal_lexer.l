@@ -1,85 +1,65 @@
 %{
 #include <stdio.h>
 #include <string.h>
-
-// Enumerar inicialmente para Debug, fica mais limpo retirar posteriormente
-enum {
-    TOK_PROGRAM=256, TOK_BEGIN=257, TOK_END=258, TOK_PROC=259, TOK_FUNC=260,
-    TOK_VAR=261, TOK_INT=262, TOK_BOOL=263, TOK_FALSE=264, TOK_TRUE=265,
-    TOK_WHILE=266, TOK_DO=267, TOK_IF=268, TOK_THEN=269, TOK_ELSE=270,
-    TOK_READ=271, TOK_WRITE=272, TOK_AND=273, TOK_OR=274, TOK_NOT=275,
-    TOK_DIV=276, TOK_DIF=277, TOK_MENIG=278, TOK_MAIIG=279, TOK_ATRI=280,
-    TOK_NUM=281, TOK_ID=282};
-
-char lexema[100];
+#include <stdlib.h>
+#include "rascal_parser.tab.h"
 %}
 
 %option noyywrap yylineno
 
-ESPACO      [ \t\n\r]+
-DIGITO      [0-9]
-LETRA       [a-zA-Z]
-ID          {LETRA}({LETRA}|{DIGITO}|_)*
-NUM         {DIGITO}*
+SPACES      [ \t\n\r]+
+DIGIT      [0-9]
+LETTER       [a-zA-Z]
+ID          {LETTER}({LETTER}|{DIGIT}|_)*
+NUM         {DIGIT}*
 
 %%
 
-{NUM}               {strcpy(lexema, yytext); return TOK_NUM;}
+"program"           {return PROGRAM;}
+"begin"             {return TBEGIN;}
+"end"               {return END;}
+"procedure"         {return PROCEDURE;}
+"function"          {return FUNCTION;}
+"var"               {return VAR;}
+"integer"           {return INTEGER;}
+"boolean"           {return BOOLEAN;}
+"false"             {return TFALSE;}
+"true"              {return TTRUE;}
+"while"             {return WHILE;}
+"do"                {return DO;}
+"if"                {return IF;}
+"then"              {return THEN;}
+"else"              {return ELSE;}
+"read"              {return READ;}
+"write"             {return WRITE;}
+"and"               {return AND;}
+"or"                {return OR;}
+"not"               {return NOT;}
+"div"               {return DIV;}
 
-"program"           {strcpy(lexema, yytext); return TOK_PROGRAM;}
-"begin"             {strcpy(lexema, yytext); return TOK_BEGIN;}
-"end"               {strcpy(lexema, yytext); return TOK_END;}
-"procedure"         {strcpy(lexema, yytext); return TOK_PROC;}
-"function"          {strcpy(lexema, yytext); return TOK_FUNC;}
-"var"               {strcpy(lexema, yytext); return TOK_VAR;}
-"integer"           {strcpy(lexema, yytext); return TOK_INT;}
-"boolean"           {strcpy(lexema, yytext); return TOK_BOOL;}
-"false"             {strcpy(lexema, yytext); return TOK_FALSE;}
-"true"              {strcpy(lexema, yytext); return TOK_TRUE;}
-"while"             {strcpy(lexema, yytext); return TOK_WHILE;}
-"do"                {strcpy(lexema, yytext); return TOK_DO;}
-"if"                {strcpy(lexema, yytext); return TOK_IF;}
-"then"              {strcpy(lexema, yytext); return TOK_THEN;}
-"else"              {strcpy(lexema, yytext); return TOK_ELSE;}
-"read"              {strcpy(lexema, yytext); return TOK_READ;}
-"write"             {strcpy(lexema, yytext); return TOK_WRITE;}
-"and"               {strcpy(lexema, yytext); return TOK_AND;}
-"or"                {strcpy(lexema, yytext); return TOK_OR;}
-"not"               {strcpy(lexema, yytext); return TOK_NOT;}
-"div"               {strcpy(lexema, yytext); return TOK_DIV;}
+{NUM}               {yylval.dval = strtod(yytext, NULL); return NUM;}
+{ID}                { yylval.sval = strdup(yytext); return ID; }
 
-{ID}                {strcpy(lexema, yytext); return TOK_ID;}
+"<>"                {return DIF;}
+"<="                {return LTE;}
+">="                {return GTE;}
+":="                {return ASSIGN;}
 
-"<>"                {strcpy(lexema, yytext); return TOK_DIF;}
-"<="                {strcpy(lexema, yytext); return TOK_MENIG;}
-">="                {strcpy(lexema, yytext); return TOK_MAIIG;}
-":="                {strcpy(lexema, yytext); return TOK_ATRI;}
+"("                 {return '(';}
+")"                 {return ')';}
+";"                 {return ';';}
+"="                 {return '=';}
+"<"                 {return '<';}
+">"                 {return '>';}
+"+"                 {return '+';}
+"-"                 {return '-';}
+"*"                 {return '*';}
+":"                 {return ':';}
+","                 {return ',';}
+"."                 {return '.';}
 
-"("                 {strcpy(lexema, yytext); return '(';}
-")"                 {strcpy(lexema, yytext); return ')';}
-";"                 {strcpy(lexema, yytext); return ';';}
-"="                 {strcpy(lexema, yytext); return '=';}
-"<"                 {strcpy(lexema, yytext); return '<';}
-">"                 {strcpy(lexema, yytext); return '>';}
-"+"                 {strcpy(lexema, yytext); return '+';}
-"-"                 {strcpy(lexema, yytext); return '-';}
-"*"                 {strcpy(lexema, yytext); return '*';}
-":"                 {strcpy(lexema, yytext); return ':';}
-","                 {strcpy(lexema, yytext); return ',';}
-"."                 {strcpy(lexema, yytext); return '.';}
-
-{ESPACO}            /* Ignorar espaços, tabulações e quebras de linha */
+{SPACES}            /* Ignorar espaços, tabulações e quebras de linha */
 
 .                   {printf("ERRO LÉXICO na linha %d: símbolo ilegal %c\n", yylineno, yytext[0]);}
 
 %%
-
-// Função temporária para testar o Lexer
-int main (int argc, char *argv[]) {
-    int tok;
-    yyin = fopen(argv[1], "r");
-    while (tok=yylex()) {
-        printf("<%s, %d>\t(linha: %d)\n", lexema, tok, yylineno);
-    }
-    fclose(yyin);
-}

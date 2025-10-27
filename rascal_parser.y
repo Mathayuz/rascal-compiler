@@ -13,7 +13,7 @@ extern int yylineno;
     char* sval;
 }
 
-%token PROGRAM BEGIN END PROCEDURE FUNCTION VAR INTEGER BOOLEAN FALSE TRUE WHILE DO IF THEN ELSE READ WRITE AND OR NOT DIV DIF LTE GTE ASSIGN
+%token PROGRAM TBEGIN END PROCEDURE FUNCTION VAR INTEGER BOOLEAN TFALSE TTRUE WHILE DO IF THEN ELSE READ WRITE AND OR NOT DIV DIF LTE GTE ASSIGN
 %token <sval> ID
 %token <dval> NUM
 
@@ -74,7 +74,6 @@ subr_decl_sec
     | subr_decl_sec subr_decl
     ;
 
-
 subr_decl
     : proc_decl ';'
     | func_decl ';'
@@ -111,7 +110,7 @@ param_decl
     ;
 
 compound_cmd
-    : BEGIN cmd_list END
+    : TBEGIN cmd_list END
     ;
 
 cmd_list
@@ -187,7 +186,8 @@ relational
     ;
 
 simple_expr
-    : term op_term_list
+    : term
+    | term op_term_list
     ;
 
 op_term_list
@@ -202,7 +202,8 @@ op_term
     ;
 
 term
-    : factor op_factor_list
+    : factor
+    | factor op_factor_list
     ;
 
 op_factor_list
@@ -231,8 +232,8 @@ variable
     ;
 
 logical
-    : TRUE
-    | FALSE
+    : TTRUE
+    | TFALSE
     ;
 
 func_call

@@ -1,0 +1,10 @@
+O arquivo Makefile está configurado para suportar a compilação e execução da árvore AST, portanto
+para rodar o projeto provisóriamente, essa é a sequência de comandos no terminal:
+
+bison -d rascal_parser.y
+
+flex rascal_lexer.l
+
+gcc -o rascalc rascal_parser.tab.c lex.yy.c -lfl
+
+./rascalc < arquivo_de_entrada.ras
