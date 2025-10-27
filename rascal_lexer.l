@@ -14,19 +14,17 @@ enum {
 char lexema[100];
 %}
 
-%option noyywrap
-%option yylineno
+%option noyywrap yylineno
 
-espaco     [ \t\n]
-digito      [0-9]
-letra       [a-zA-Z]
-id          {letra}({letra}|{digito}|_)*
+ESPACO      [ \t\n\r]+
+DIGITO      [0-9]
+LETRA       [a-zA-Z]
+ID          {LETRA}({LETRA}|{DIGITO}|_)*
+NUM         {DIGITO}*
 
 %%
 
-{espaco}+          /* Ignorar espaços, tabulações e quebras de linha */
-
-{digito}+           {strcpy(lexema, yytext); return TOK_NUM;}
+{NUM}               {strcpy(lexema, yytext); return TOK_NUM;}
 
 "program"           {strcpy(lexema, yytext); return TOK_PROGRAM;}
 "begin"             {strcpy(lexema, yytext); return TOK_BEGIN;}
@@ -50,6 +48,8 @@ id          {letra}({letra}|{digito}|_)*
 "not"               {strcpy(lexema, yytext); return TOK_NOT;}
 "div"               {strcpy(lexema, yytext); return TOK_DIV;}
 
+{ID}                {strcpy(lexema, yytext); return TOK_ID;}
+
 "<>"                {strcpy(lexema, yytext); return TOK_DIF;}
 "<="                {strcpy(lexema, yytext); return TOK_MENIG;}
 ">="                {strcpy(lexema, yytext); return TOK_MAIIG;}
@@ -68,9 +68,9 @@ id          {letra}({letra}|{digito}|_)*
 ","                 {strcpy(lexema, yytext); return ',';}
 "."                 {strcpy(lexema, yytext); return '.';}
 
-{id}                {strcpy(lexema, yytext); return TOK_ID;}
+{ESPACO}            /* Ignorar espaços, tabulações e quebras de linha */
 
-.                   {strcpy(lexema, yytext); return TOK_ERR;}
+.                   {strcpy(lexema, "ERRO!"); return TOK_ERR;}
 
 %%
 
