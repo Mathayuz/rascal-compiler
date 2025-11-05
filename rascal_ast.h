@@ -67,8 +67,8 @@ typedef enum {Equal, Different, Less, LessEqual, Greater, GreaterEqual} relation
 typedef struct Expression {
     exprType type;
     union {
-        struct {struct SimpleExpression* simple;} simpExp;
-        struct {struct SimpleExpression* left; relationalOperation relOperator; struct SimpleExpression* right;} relExp;
+        struct {struct SimpleExpression* simple;} simpExp;                                                                // Simple Expression
+        struct {struct SimpleExpression* left; relationalOperation relOperator; struct SimpleExpression* right;} relExp;  // Relational Expression
     } exprU;
     struct Expression* next; // To link in the list
 } Expression;
@@ -80,8 +80,8 @@ typedef enum {Plus, Minus, Or} termOperation;
 typedef struct SimpleExpression {
     simpExprType type;
     union {
-        struct {struct Term* term;} singleSimpExpr;
-        struct {struct Term* left; termOperation termOperator; struct SimpleExpression* right;} compoundSimpExpr;
+        struct {struct Term* term;} singleSimpExpr;                                                               // Single Simple Expression
+        struct {struct Term* left; termOperation termOperator; struct SimpleExpression* right;} compoundSimpExpr; // Compound Simple Expression
     } simpExprU;
 } SimpleExpression;
 
@@ -92,25 +92,82 @@ typedef enum {Multiplication, Division, And} factorOperation;
 typedef struct Term {
     termType type;
     union {
-        struct {struct Factor* factor;} simpleTerm;
-        struct {struct Factor* left; factorOperation factOperator; struct Term* right;} compoundTerm;
+        struct {struct Factor* factor;} simpleTerm;                                                     // Simple Term
+        struct {struct Factor* left; factorOperation factOperator; struct Term* right;} compoundTerm;   // Coumpound Term
     } termU;
 } Term;
 
 // Factor Node
-typedef enum {Variable, Number, Boolean, FunctionCall, Expression, Unary} factorType;
+typedef enum {Variable, Number, Boolean, FunctionCall, ExpressionFT, Unary} factorType;
 typedef enum {Negative, Not} unaryOperation;
 
 typedef struct Factor {
     factorType type;
     union {
-        struct {char* identifier;} var;
-        struct {int value;} num;
-        struct {int logicalValue;} boolean;
-        struct {char* funcName; struct Expression* arguments /*List*/;} funcCall;
-        struct {struct Expression* expression;} expr;
-        struct {unaryOperation unOperator; struct Factor* operand;} unarFac;
+        struct {char* identifier;} var;                                             // Variable Factor
+        struct {int value;} num;                                                    // Number Factor
+        struct {int logicalValue;} boolean;                                         // Boolean Factor
+        struct {char* funcName; struct Expression* arguments /*List*/;} funcCall;   // Function Call Factor
+        struct {struct Expression* expression;} expr;                               // Expression Factor
+        struct {unaryOperation unOperator; struct Factor* operand;} unarFac;        // Unary Operation Factor
     } facU;
 } Factor;
+
+// Node Constructors
+Program* newProgram(char* identifier, Block* block);
+
+Block* newBlock(VarDeclaration* varDeclarations, SubRotDeclaration* subRotDeclarations, Command* commandList);
+
+VarDeclaration* newVarDeclaration(varType type, char* identifier);
+
+IdentifierList* newIdentifierList(char* identifier);
+
+SubRotDeclaration* newProcDeclaration(char* identifier, VarDeclaration* formParams);
+SubRotDeclaration* newFuncDeclaration(char* identifier, VarDeclaration* formParams, varType returnType);
+
+Command* newAssignCommand(char* identifier, Expression* expression);
+Command* newProcCallCommand(char* identifier, Expression* expressions);
+Command* newCondCommand(Expression* condExpression, Command* cmdIf, Command* cmdElse);
+Command* newLoopCommand(Expression* loopExpression, Command* cmdLoop);
+Command* newReadCommand(IdentifierList* identifiers);
+Command* newWriteCommand(Expression* expressions);
+
+Expression* newSimpleExpression(SimpleExpression* simpleExpression);
+Expression* newRelationalExpression(SimpleExpression* left, relationalOperation relOperator, SimpleExpression* right);
+
+SimpleExpression* newSingleSimpleExpression(Term* term);
+SimpleExpression* newCompoundSimpleExpression(Term* left, termOperation termOperator, SimpleExpression* right);
+
+Term* newSimpleTerm(Factor* factor);
+Term* newCompoundTerm(Factor* left, factorOperation factOperator, Term* right);
+
+Factor* newVariableFactor(char* identifier);
+Factor* newNumberFactor(int value);
+Factor* newBooleanFactor(int logicalValue);
+Factor* newFuncCallFactor(char* funcName, Expression* arguments);
+Factor* newExpressionFactor(Expression* expression);
+Factor* newUnaryOperatorFactor(unaryOperation unOperator, Factor* operand);
+
+// Add to Linked List Functions
+VarDeclaration* addVarDeclaration(VarDeclaration* list, VarDeclaration* newVarDecl);
+
+IdentifierList* addIdentifier(IdentifierList* list, IdentifierList* newId);
+
+SubRotDeclaration* addSubRotDeclaration(SubRotDeclaration* list, SubRotDeclaration* newSubRotDecl);
+
+Command* addCommand(Command* list, Command* newCmd);
+
+Expression* addExpression(Expression* list, Expression* newExpr);
+
+// Print Functions
+void printProgram(const Program* program, FILE* out);
+
+void printBlock(const Block* block, FILE* out);
+
+void printVarDeclaration(const VarDeclaration* varDecarations, FILE* out);
+
+
+
+// Free Functions
 
 #endif
