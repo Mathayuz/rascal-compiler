@@ -161,13 +161,26 @@ Expression* addExpression(Expression* list, Expression* newExpr);
 
 // Print Functions
 void printProgram(const Program* program, FILE* out);
-
 void printBlock(const Block* block, FILE* out);
-
-void printVarDeclaration(const VarDeclaration* varDecarations, FILE* out);
-
-
+void printVarDeclaration(const VarDeclaration* varDecaration, FILE* out);
+void printIdentifierList(const IdentifierList* identifierList, FILE* out);
+void printSubRotDeclaration(const SubRotDeclaration* subRotDeclaration, FILE* out);
+void printCommand(const Command* command, FILE* out);
+void printExpression(const Expression* expression, FILE* out);
+void printSimpleExpression(const SimpleExpression* simpleExpression, FILE* out);
+void printTerm(const Term* term, FILE* out);
+void printFactor(const Factor* factor, FILE* out);
 
 // Free Functions
+void freeProgram(const Program* p);
+void freeBlock(const Block* b);
+void freeVarDeclaration(const VarDeclaration* vd);
+void freeIdentifierList(const IdentifierList* il);
+void freeSubRotDeclaration(const SubRotDeclaration* srd);
+void freeCommand(const Command* c);
+void freeExpression(const Expression* e);
+void freeSimpleExpression(const SimpleExpression* se);
+void freeTerm(const Term* t);
+void freeFactor(const Factor* f);
 
 #endif
