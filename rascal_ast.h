@@ -67,7 +67,7 @@ typedef enum {Equal, Different, Less, LessEqual, Greater, GreaterEqual} relation
 typedef struct Expression {
     exprType type;
     union {
-        struct {struct SimpleExpression* simple;} simpExp;                                                                // Simple Expression
+        struct {struct SimpleExpression* simple;} singExp;                                                                // Single Expression
         struct {struct SimpleExpression* left; relationalOperation relOperator; struct SimpleExpression* right;} relExp;  // Relational Expression
     } exprU;
     struct Expression* next; // To link in the list
@@ -92,7 +92,7 @@ typedef enum {Multiplication, Division, And} factorOperation;
 typedef struct Term {
     termType type;
     union {
-        struct {struct Factor* factor;} simpleTerm;                                                     // Simple Term
+        struct {struct Factor* factor;} singleTerm;                                                     // Single Term
         struct {struct Factor* left; factorOperation factOperator; struct Term* right;} compoundTerm;   // Coumpound Term
     } termU;
 } Term;
@@ -132,13 +132,13 @@ Command* newLoopCommand(Expression* loopExpression, Command* cmdLoop);
 Command* newReadCommand(IdentifierList* identifiers);
 Command* newWriteCommand(Expression* expressions);
 
-Expression* newSimpleExpression(SimpleExpression* simpleExpression);
+Expression* newSingleExpression(SimpleExpression* simpleExpression);
 Expression* newRelationalExpression(SimpleExpression* left, relationalOperation relOperator, SimpleExpression* right);
 
 SimpleExpression* newSingleSimpleExpression(Term* term);
 SimpleExpression* newCompoundSimpleExpression(Term* left, termOperation termOperator, SimpleExpression* right);
 
-Term* newSimpleTerm(Factor* factor);
+Term* newSingleTerm(Factor* factor);
 Term* newCompoundTerm(Factor* left, factorOperation factOperator, Term* right);
 
 Factor* newVariableFactor(char* identifier);
@@ -159,6 +159,18 @@ Command* addCommand(Command* list, Command* newCmd);
 
 Expression* addExpression(Expression* list, Expression* newExpr);
 
+// Free Functions
+void freeProgram(Program* p);
+void freeBlock(Block* b);
+void freeVarDeclaration(VarDeclaration* vd);
+void freeIdentifierList(IdentifierList* il);
+void freeSubRotDeclaration(SubRotDeclaration* srd);
+void freeCommand(Command* c);
+void freeExpression(Expression* e);
+void freeSimpleExpression(SimpleExpression* se);
+void freeTerm(Term* t);
+void freeFactor(Factor* f);
+
 // Print Functions
 void printProgram(const Program* program, FILE* out);
 void printBlock(const Block* block, FILE* out);
@@ -170,17 +182,5 @@ void printExpression(const Expression* expression, FILE* out);
 void printSimpleExpression(const SimpleExpression* simpleExpression, FILE* out);
 void printTerm(const Term* term, FILE* out);
 void printFactor(const Factor* factor, FILE* out);
-
-// Free Functions
-void freeProgram(const Program* p);
-void freeBlock(const Block* b);
-void freeVarDeclaration(const VarDeclaration* vd);
-void freeIdentifierList(const IdentifierList* il);
-void freeSubRotDeclaration(const SubRotDeclaration* srd);
-void freeCommand(const Command* c);
-void freeExpression(const Expression* e);
-void freeSimpleExpression(const SimpleExpression* se);
-void freeTerm(const Term* t);
-void freeFactor(const Factor* f);
 
 #endif
