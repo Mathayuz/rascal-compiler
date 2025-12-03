@@ -39,24 +39,34 @@ IdentifierList* newIdentifierList(char* identifier) {
 }
 
 // Procedure Declaration Node Constructor
-SubRotDeclaration* newProcDeclaration(char* identifier, VarDeclaration* formParams) {
+SubRotDeclaration* newProcDeclaration(char* identifier, VarDeclaration* formParams, SubRotBlock* subRotBlock) {
     SubRotDeclaration* pd = (SubRotDeclaration*)malloc(sizeof(SubRotDeclaration));
     pd->type = Proc;
     pd->subrotU.procInfo.identifier = identifier;
     pd->subrotU.procInfo.formParams = formParams;
+    pd->subrotU.procInfo.subRotBlock = subRotBlock;
     pd->next = NULL;
     return pd;
 }
 
 // Function Declaration Node Constructor
-SubRotDeclaration* newFuncDeclaration(char* identifier, VarDeclaration* formParams, varType returnType) {
+SubRotDeclaration* newFuncDeclaration(char* identifier, VarDeclaration* formParams, varType returnType, SubRotBlock* subRotBlock) {
     SubRotDeclaration* fd = (SubRotDeclaration*)malloc(sizeof(SubRotDeclaration));
     fd->type = Func;
     fd->subrotU.funcInfo.identifier = identifier;
     fd->subrotU.funcInfo.formParams = formParams;
     fd->subrotU.funcInfo.returnType = returnType;
+    fd->subrotU.funcInfo.subRotBlock = subRotBlock;
     fd->next = NULL;
     return fd;
+}
+
+// Subroutine Block Node Constructor
+SubRotBlock* newSubRotBlock(VarDeclaration* varDeclarations, Command* commands) {
+    SubRotBlock* srb = (SubRotBlock*)malloc(sizeof(SubRotBlock));
+    srb->varDeclarations = varDeclarations;
+    srb->commands = commands;
+    return srb;
 }
 
 // Assign Command Node Constructor
@@ -70,11 +80,11 @@ Command* newAssignCommand(char* identifier, Expression* expression) {
 }
 
 // Procedure Call Command Node Constructor
-Command* newProcCallCommand(char* identifier, Expression* expressions) {
+Command* newProcCallCommand(char* identifier, Expression* expressionList) {
     Command* pc = (Command*)malloc(sizeof(Command));
     pc->type = ProcCall;
     pc->cmdU.procCallInfo.identifier = identifier;
-    pc->cmdU.procCallInfo.expressions = expressions;
+    pc->cmdU.procCallInfo.expressionList = expressionList;
     pc->next = NULL;
     return pc;
 }
@@ -110,14 +120,67 @@ Command* newReadCommand(IdentifierList* identifiers) {
 }
 
 // Write Command Node Constructor
-Command* newWriteCommand(Expression* expressions) {
+Command* newWriteCommand(Expression* expressionList) {
     Command* wc = (Command*)malloc(sizeof(Command));
     wc->type = Write;
-    wc->cmdU.writeInfo.expressions = expressions;
+    wc->cmdU.writeInfo.expressionList = expressionList;
     wc->next = NULL;
     return wc;
 }
 
+// Binary Expression Node Constructor
+Expression* newBinaryExpression(Expression* left, Operator operator, Expression* right) {
+    Expression* e = (Expression*)malloc(sizeof(Expression));
+    e->type = Binary;
+    e->exprU.binExpr.left = left;
+    e->exprU.binExpr.operator = operator;
+    e->exprU.binExpr.right = right;
+    return e;
+}
+
+// Unary Expression Node Constructor
+Expression* newUnaryExpression(Operator operator, Expression* right) {
+    Expression* e = (Expression*)malloc(sizeof(Expression));
+    e->type = Unary;
+    e->exprU.unyExpr.operator = operator;
+    e->exprU.unyExpr.right = right;
+    return e;
+}
+
+// Variable Expression Node Constructor
+Expression* newVariableExpression(char* identifier) {
+    Expression* e = (Expression*)malloc(sizeof(Expression));
+    e->type = Var;
+    e->exprU.varExpr.identifier = identifier;
+    return e;
+}
+
+// Constant Integer Expression Node Constructor
+Expression* newConstantIntegerExpression(int number) {
+    Expression* e = (Expression*)malloc(sizeof(Expression));
+    e->type = ConstInt;
+    e->exprU.intExpr.number = number;
+    return e;
+}
+
+// Constant Boolean Expression Node Constructor
+Expression* newConstantBooleanExpression(BooleanValue boolean) {
+    Expression* e = (Expression*)malloc(sizeof(Expression));
+    e->type = ConstBool;
+    e->exprU.boolExpr.boolean = boolean;
+    return e;
+}
+
+// Function Call Expression Node Constructor
+Expression* newFunctionCallExpression(char* identifier, Expression* expressionList) {
+    Expression* e = (Expression*)malloc(sizeof(Expression));
+    e->type = FuncCall;
+    e->exprU.funCallExpr.identifier = identifier;
+    e->exprU.funCallExpr.expressionList = expressionList;
+    return e;
+}
+
+/*
 // Single Expression Node Constructor
 Expression* newSingleExpression(SimpleExpression* simpleExpression) {
     Expression* se = (Expression*)malloc(sizeof(Expression));
@@ -223,6 +286,7 @@ Factor* newUnaryOperatorFactor(unaryOperation unOperator, Factor* operand) {
     uf->facU.unarFac.operand = operand;
     return uf;
 }
+*/
 
 // - Add to List Functions ----------------
 
@@ -273,6 +337,12 @@ Expression* addExpression(Expression* list, Expression* newExpr) {
 
 // - Free ---------------------------------
 
+// Free Abstract Syntax Tree Function
+void freeAstRoot(Program* r) {
+    if (!r) return;
+    freeProgram(r);
+}
+
 // Free Program Node Function
 void freeProgram(Program* p) {
     if (!p) return;
@@ -304,7 +374,7 @@ void freeVarDeclaration(VarDeclaration* vd) {
 void freeIdentifierList(IdentifierList* il) {
     while (il) {
         IdentifierList* next = il->next;
-        free(il->identifier);
+        // free(il->identifier); -> As string são movidas para outra estrutura.
         free(il);
         il = next;
     }
@@ -318,15 +388,24 @@ void freeSubRotDeclaration(SubRotDeclaration* srd) {
             case Proc:
                 free(srd->subrotU.procInfo.identifier);
                 freeVarDeclaration(srd->subrotU.procInfo.formParams);
+                freeSubRotBlock(srd->subrotU.procInfo.subRotBlock);
                 break;
             case Func:
                 free(srd->subrotU.funcInfo.identifier);
                 freeVarDeclaration(srd->subrotU.funcInfo.formParams);
+                freeSubRotBlock(srd->subrotU.funcInfo.subRotBlock);
                 break;
         }
         free(srd);
         srd = next;
     }
+}
+
+// Free Subroutine Block Node Function
+void freeSubRotBlock(SubRotBlock* srb) {
+    freeVarDeclaration(srb->varDeclarations);
+    freeCommand(srb->commands);
+    free(srb);
 }
 
 // Free Command Node Function
@@ -340,7 +419,7 @@ void freeCommand(Command* c) {
                 break;
             case ProcCall:
                 free(c->cmdU.procCallInfo.identifier);
-                freeExpression(c->cmdU.procCallInfo.expressions);
+                freeExpression(c->cmdU.procCallInfo.expressionList);
                 break;
             case Conditional:
                 freeExpression(c->cmdU.condInfo.condExpression);
@@ -355,7 +434,7 @@ void freeCommand(Command* c) {
                 freeIdentifierList(c->cmdU.readInfo.identifiers);
                 break;
             case Write:
-                freeExpression(c->cmdU.writeInfo.expressions);
+                freeExpression(c->cmdU.writeInfo.expressionList);
                 break;
         }
         free(c);
@@ -363,6 +442,32 @@ void freeCommand(Command* c) {
     }
 }
 
+// Free Expression Node Function
+void freeExpression(Expression* e) {
+    while (e) {
+        Expression* next = e->next;
+        switch (e->type) {
+            case Binary:
+                freeExpression(e->exprU.binExpr.left);
+                freeExpression(e->exprU.binExpr.right);
+                break;
+            case Unary:
+                freeExpression(e->exprU.unyExpr.right);
+                break;
+            case Var:
+                free(e->exprU.varExpr.identifier);
+                break;
+            case FuncCall:
+                free(e->exprU.funCallExpr.identifier);
+                freeExpression(e->exprU.funCallExpr.expressionList);
+                break;
+        }
+        free(e);
+        e = next;
+    }
+}
+
+/*
 // Free Expression Node Function
 void freeExpression(Expression* e) {
     while (e) {
@@ -380,7 +485,9 @@ void freeExpression(Expression* e) {
         e = next;
     }
 }
+*/
 
+/*
 // Free Simple Expression Node Function
 void freeSimpleExpression(SimpleExpression* se) {
     if (!se) return;
@@ -436,7 +543,14 @@ void freeFactor(Factor* f) {
     free(f);
 }
 
+*/
+
 // - Print --------------------------------
+
+// Abstract Syntax Tree Print Function
+void printAstRoot(Program* ast_root, FILE* out) {
+    printProgram(ast_root, out);
+}
 
 // Program Node Print Function
 void printProgram(const Program* program, FILE* out) {
@@ -486,6 +600,7 @@ void printSubRotDeclaration(const SubRotDeclaration* subRotDeclaration, FILE* ou
             case Proc:
                 fprintf(out, "(procedure %s (formal parameters ", subRotDeclaration->subrotU.procInfo.identifier);
                 printVarDeclaration(subRotDeclaration->subrotU.procInfo.formParams, out);
+                printSubRotBlock(subRotDeclaration->subrotU.funcInfo.subRotBlock, out);
                 fprintf(out, ") )");
                 break;
             case Func:
@@ -498,10 +613,20 @@ void printSubRotDeclaration(const SubRotDeclaration* subRotDeclaration, FILE* ou
                         break;
                 }
                 printVarDeclaration(subRotDeclaration->subrotU.funcInfo.formParams, out);
+                printSubRotBlock(subRotDeclaration->subrotU.funcInfo.subRotBlock, out);
                 fprintf(out, ") )");
                 break;
         }
     }
+}
+
+// Subroutine Block Node Print Function
+void printSubRotBlock(const SubRotBlock* subRotBlock, FILE* out) {
+    fprintf(out, "(subroutine block; (local variables ");
+    printVarDeclaration(subRotBlock->varDeclarations, out);
+    fprintf(out, ") (subroutine commands ");
+    printCommand(subRotBlock->commands, out);
+    fprintf(out, ") )");
 }
 
 // Command Node Print Function
@@ -515,7 +640,7 @@ void printCommand(const Command* command, FILE* out) {
                 break;
             case ProcCall:
                 fprintf(out, "(%s procedure call command: ", command->cmdU.procCallInfo.identifier);
-                printExpression(command->cmdU.procCallInfo.expressions, out);
+                printExpression(command->cmdU.procCallInfo.expressionList, out);
                 fprintf(out, ")\n");
                 break;
             case Conditional:
@@ -526,7 +651,8 @@ void printCommand(const Command* command, FILE* out) {
                 fprintf(out, ")\nelse (");
                 printCommand(command->cmdU.condInfo.cmdElse, out);
                 fprintf(out, ")\n");
-                break;
+                break;struct VarDeclaration* varDeclarations;
+    struct Command* commands;
             case Loop:
                 fprintf(out, "(loop command - while (");
                 printExpression(command->cmdU.loopInfo.loopExpression, out);
@@ -541,13 +667,93 @@ void printCommand(const Command* command, FILE* out) {
                 break;
             case Write:
                 fprintf(out, "(write command: ");
-                printExpression(command->cmdU.writeInfo.expressions, out);
+                printExpression(command->cmdU.writeInfo.expressionList, out);
                 fprintf(out, ")\n");
                 break;
         }
     }
 }
 
+typedef enum {Equal, Different, Less, LessEqual, Greater, GreaterEqual, Plus, Minus, Or, Multiplication, Division, And} Operator;
+
+// Expression Node Print Function
+void prinExpression(const Expression* expression, FILE* out) {
+    for (; expression; expression = expression->next) {
+        switch (expression->type) {
+            case Binary:
+                fprintf(out, "(binary expression (left ");
+                printExpression(expression->exprU.binExpr.left, out);
+                fprintf(out, ") (operator ");
+                switch (expression->exprU.binExpr.operator) {
+                    case Equal:
+                        fprintf(out, "=");
+                        break;
+                    case Different:
+                        fprintf(out, "<>");
+                        break;
+                    case Less:
+                        fprintf(out, "<");
+                        break;
+                    case LessEqual:
+                        fprintf(out, "<=");
+                        break;
+                    case Greater:
+                        fprintf(out, ">");
+                        break;
+                    case GreaterEqual:
+                        fprintf(out, ">=");
+                        break;
+                    case Plus:
+                        fprintf(out, "+");
+                        break;
+                    case Minus:
+                        fprintf(out, "-");
+                        break;
+                    case Or:
+                        fprintf(out, "OR");
+                        break;
+                    case Multiplication:
+                        fprintf(out, "*");
+                        break;
+                    case Division:
+                        fprintf(out, "/");
+                        break;
+                    case And:
+                        fprintf(out, "AND");
+                        break;
+                }
+                fprintf(out, " ) (right");
+                printExpression(expression->exprU.binExpr.right, out);
+                fprintf(out, ") )");
+                break;
+            case Var:
+                fprintf(out, "( variable expression: %s)", expression->exprU.varExpr.identifier);
+                break;
+            case ConstInt:
+                fprintf(out, "( constant integer expression: %i)", expression->exprU.intExpr.number);
+                break;
+            case ConstBool:
+                fprintf(out, "( constant boolean expression: ");
+                switch (expression->exprU.boolExpr.boolean) {
+                    case BoolFalse:
+                        fprintf(out, "false");
+                        break;
+                    case BoolTrue:
+                        fprintf(out, "true");
+                        break;
+                }
+                fprintf(out, ")");
+                break;
+            case FuncCall:
+                fprintf(out, "(%s function call - (expression list ", expression->exprU.funCallExpr.identifier);
+                printExpression(expression->exprU.funCallExpr.expressionList, out);
+                fprintf(out, ") )");
+                break;
+        }
+    }
+}
+
+/*
 // Expression Node Print Function
 void printExpression(const Expression* expression, FILE* out) {
     for (; expression; expression = expression->next) {
@@ -682,3 +888,5 @@ void printFactor(const Factor* factor, FILE* out) {
             break;
     }
 }
+
+*/

@@ -3,13 +3,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include "rascal_parser.tab.h"
+#include "rascal_ast.h"
 %}
 
 %option noyywrap yylineno
 
 SPACES      [ \t\n\r]+
-DIGIT      [0-9]
-LETTER       [a-zA-Z]
+DIGIT       [0-9]
+LETTER      [a-zA-Z]
 ID          {LETTER}({LETTER}|{DIGIT}|_)*
 NUM         {DIGIT}*
 
