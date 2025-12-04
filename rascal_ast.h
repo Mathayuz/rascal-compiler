@@ -138,7 +138,7 @@ void printIdentifierList(const IdentifierList* identifierList, FILE* out);
 void printSubRotDeclaration(const SubRotDeclaration* subRotDeclaration, FILE* out, int level);
 void printSubRotBlock(const SubRotBlock* subRotBlock, FILE* out, int level);
 void printCommand(const Command* command, FILE* out, int level);
-void printExpression(const Expression* expression, FILE* out);
+void printExpression(const Expression* expression, FILE* out, int level);
 
 /* Global Variable for AST Root */
 extern Program* ast_root;
