@@ -51,16 +51,17 @@ Program* ast_root = NULL;
 %type <vType> type;
 
 // Subroutine Declarations Section
-%type <subRotDecl> subr_decl_sec_optional subr_decl_sec subr_decl proc_decl func_decl form_param_optional
-%type <varDecl> form_param_list form_param
+%type <subRotDecl> subr_decl_sec_optional subr_decl_sec subr_decl proc_decl func_decl
+%type <varDecl> form_param_optional form_param_list form_param
 %type <subRotBlock> subr_block;
 
 // Commands Section
 %type <cmd> compound_cmd cmd_list cmd assign_cmd proc_call_cmd cond_cmd else_part_optional loop_cmd read_cmd write_cmd
 
 // Expression Section
-%type <expr> expr_list_optional expr_list expr simple_expr term factor variable func_call
+%type <expr> expr_list_optional expr_list expr simple_expr term factor func_call
 %type <op> relational;
+%type <sval> variable;
 %type <boolVal> logical;
 
 %nonassoc '=' DIF '<' LTE '>' GTE
@@ -68,7 +69,7 @@ Program* ast_root = NULL;
 %left '*' DIV AND
 %left NOT
 
-%nonassoc THEN
+%nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 
 %%
@@ -201,8 +202,8 @@ cond_cmd
     ;
 
 else_part_optional
-    : ELSE cmd                      {$$ = $2;}
-    | /* empty */                   {$$ = NULL;}
+    : ELSE cmd                                                  {$$ = $2;}
+    | /* empty */ %prec LOWER_THAN_ELSE                         {$$ = NULL;}
     ;
 
 loop_cmd

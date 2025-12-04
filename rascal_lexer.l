@@ -8,7 +8,7 @@
 void yyerror(const char *s);
 %}
 
-%option noyywrap yylineno
+%option noyywrap yylineno nounput noinput
 
 SPACES      [ \t\n\r]+
 DIGIT       [0-9]
@@ -40,7 +40,7 @@ ID          {LETTER}({LETTER}|{DIGIT}|_)*
 "not"               {return NOT;}
 "div"               {return DIV;}
 
-{NUM}               {yylval.dval = atoi(yytext); return NUM;}
+{NUM}               {yylval.ival = atoi(yytext); return NUM;}
 {ID}                { yylval.sval = strdup(yytext); return ID; }
 
 "<>"                {return DIF;}
