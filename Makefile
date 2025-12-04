@@ -1,28 +1,48 @@
+# Definitions
+CC = gcc
+CFLAGS = -g -Wall
+LIBS = -lfl
+
+# Main Target
 all: rascalc
 
-rascalc: rascal_ast.o rascal_parser.tab.o lex.yy.o
-	gcc $^ -o $@ -lfl
+# Linking
+rascalc: rascal_parser.tab.o lex.yy.o rascal_ast.o main.o
+	$(CC) $(CFLAGS) -o rascalc rascal_parser.tab.o lex.yy.o rascal_ast.o main.o $(LIBS)
 
-rascal_parser.tab.c rascal_parser.tab.h: parser.y
-	bison -d parser.y
+# Bison Compilation
+rascal_parser.tab.c rascal_parser.tab.h: rascal_parser.y
+	bison -d rascal_parser.y
 
+# Lexer Compilation
 lex.yy.c: rascal_lexer.l rascal_parser.tab.h
 	flex rascal_lexer.l
 
-rascal_ast.o: rascal_ast.c rascal_ast.h
-	gcc -c rascal_ast.c
+# Objects Compilation
+# Lexer
+lex.yy.o: lex.yy.c rascal_parser.tab.h rascal_ast.h
+	$(CC) $(CFLAGS) -c lex.yy.c
 
+# Parser
 rascal_parser.tab.o: rascal_parser.tab.c rascal_ast.h
-	gcc -c rascal_parser.tab.c
+	$(CC) $(CFLAGS) -c rascal_parser.tab.c
 
-lex.yy.o: lex.yy.c
-	gcc -c lex.yy.c
+# Abstract Syntax Tree
+rascal_ast.o: rascal_ast.c rascal_ast.h
+	$(CC) $(CFLAGS) -c rascal_ast.c
 
-main.o: main.c rascal_ast.h
-	gcc -c main.c
+# Main
+main.o: main.c rascal_ast.h rascal_parser.tab.h
+	$(CC) $(CFLAGS) -c main.c
+
+# Utils
 
 clean:
 	rm -f rascalc *.o rascal_parser.tab.* lex.yy.c parser.output
+
+# Quick tests
+run: rascalc
+	./rascalc teste.ras
 
 runOK:
 	./rascalc exemplo1.ras
@@ -30,4 +50,4 @@ runOK:
 runErro:
 	./rascalc exemplo_erro.ras
 
-.PHONY: all clean runErro runOK
+.PHONY: all clean run

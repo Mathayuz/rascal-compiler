@@ -1,18 +1,20 @@
 %{
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include "rascal_parser.tab.h"
 #include "rascal_ast.h"
+
+void yyerror(const char *s);
 %}
 
 %option noyywrap yylineno
 
 SPACES      [ \t\n\r]+
 DIGIT       [0-9]
+NUM         {DIGIT}+
 LETTER      [a-zA-Z]
 ID          {LETTER}({LETTER}|{DIGIT}|_)*
-NUM         {DIGIT}*
 
 %%
 
@@ -38,7 +40,7 @@ NUM         {DIGIT}*
 "not"               {return NOT;}
 "div"               {return DIV;}
 
-{NUM}               {yylval.dval = strtod(yytext, NULL); return NUM;}
+{NUM}               {yylval.dval = atoi(yytext); return NUM;}
 {ID}                { yylval.sval = strdup(yytext); return ID; }
 
 "<>"                {return DIF;}
@@ -61,6 +63,6 @@ NUM         {DIGIT}*
 
 {SPACES}            /* Ignorar espaços, tabulações e quebras de linha */
 
-.                   {printf("ERRO LÉXICO na linha %d: símbolo ilegal %c\n", yylineno, yytext[0]);}
+.                   {printf("Erro léxico na linha %d: símbolo ilegal em '%s'\n", yylineno, yytext);}
 
 %%

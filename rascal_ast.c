@@ -135,6 +135,7 @@ Expression* newBinaryExpression(Expression* left, Operator operator, Expression*
     e->exprU.binExpr.left = left;
     e->exprU.binExpr.operator = operator;
     e->exprU.binExpr.right = right;
+    e->next = NULL;
     return e;
 }
 
@@ -144,6 +145,7 @@ Expression* newUnaryExpression(Operator operator, Expression* right) {
     e->type = Unary;
     e->exprU.unyExpr.operator = operator;
     e->exprU.unyExpr.right = right;
+    e->next = NULL;
     return e;
 }
 
@@ -152,6 +154,7 @@ Expression* newVariableExpression(char* identifier) {
     Expression* e = (Expression*)malloc(sizeof(Expression));
     e->type = Var;
     e->exprU.varExpr.identifier = identifier;
+    e->next = NULL;
     return e;
 }
 
@@ -160,6 +163,7 @@ Expression* newConstantIntegerExpression(int number) {
     Expression* e = (Expression*)malloc(sizeof(Expression));
     e->type = ConstInt;
     e->exprU.intExpr.number = number;
+    e->next = NULL;
     return e;
 }
 
@@ -168,6 +172,7 @@ Expression* newConstantBooleanExpression(BooleanValue boolean) {
     Expression* e = (Expression*)malloc(sizeof(Expression));
     e->type = ConstBool;
     e->exprU.boolExpr.boolean = boolean;
+    e->next = NULL;
     return e;
 }
 
@@ -177,116 +182,9 @@ Expression* newFunctionCallExpression(char* identifier, Expression* expressionLi
     e->type = FuncCall;
     e->exprU.funCallExpr.identifier = identifier;
     e->exprU.funCallExpr.expressionList = expressionList;
+    e->next = NULL;
     return e;
 }
-
-/*
-// Single Expression Node Constructor
-Expression* newSingleExpression(SimpleExpression* simpleExpression) {
-    Expression* se = (Expression*)malloc(sizeof(Expression));
-    se->type = SingleExpression;
-    se->exprU.singExp.simple = simpleExpression;
-    se->next = NULL;
-    return se;
-}
-
-// Relational Expression Node Constructor
-Expression* newRelationalExpression(SimpleExpression* left, relationalOperation relOperator, SimpleExpression* right) {
-    Expression* re = (Expression*)malloc(sizeof(Expression));
-    re->type = RelationalExpression;
-    re->exprU.relExp.left = left;
-    re->exprU.relExp.relOperator = relOperator;
-    re->exprU.relExp.right = right;
-    re->next = NULL;
-    return re;
-}
-
-// Single Simple Expression Node Constructor
-SimpleExpression* newSingleSimpleExpression(Term* term) {
-    SimpleExpression* sse = (SimpleExpression*)malloc(sizeof(SimpleExpression));
-    sse->type = SingleSimpleExpression;
-    sse->simpExprU.singleSimpExpr.term = term;
-    return sse;
-}
-
-// Compound Simple Expression Node Constructor
-SimpleExpression* newCompoundSimpleExpression(Term* left, termOperation termOperator, SimpleExpression* right) {
-    SimpleExpression* cse = (SimpleExpression*)malloc(sizeof(SimpleExpression));
-    cse->type = CompoundSimpleExpression;
-    cse->simpExprU.compoundSimpExpr.left = left;
-    cse->simpExprU.compoundSimpExpr.termOperator = termOperator;
-    cse->simpExprU.compoundSimpExpr.right = right;
-    return cse;
-}
-
-// Simple Term Node Constructor
-Term* newSingleTerm(Factor* factor) {
-    Term* st = (Term*)malloc(sizeof(Term));
-    st->type = SingleTerm;
-    st->termU.singleTerm.factor = factor;
-    return st;
-}
-
-// Compound Term Node Constructor
-Term* newCompoundTerm(Factor* left, factorOperation factOperator, Term* right) {
-    Term* ct = (Term*)malloc(sizeof(Term));
-    ct->type = CompoundTerm;
-    ct->termU.compoundTerm.left = left;
-    ct->termU.compoundTerm.factOperator = factOperator;
-    ct->termU.compoundTerm.right = right;
-    return ct;
-}
-
-// Variable Factor Node Constructor
-Factor* newVariableFactor(char* identifier) {
-    Factor* vf = (Factor*)malloc(sizeof(Factor));
-    vf->type = Variable;
-    vf->facU.var.identifier = identifier;
-    return vf;
-}
-
-// Number Factor Node Constructor
-Factor* newNumberFactor(int value) {
-    Factor* nf = (Factor*)malloc(sizeof(Factor));
-    nf->type = Number;
-    nf->facU.num.value = value;
-    return nf;
-}
-
-// Boolean Factor Node Constructor
-Factor* newBooleanFactor(int logicalValue) {
-    Factor* bf = (Factor*)malloc(sizeof(Factor));
-    bf->type = Boolean;
-    bf->facU.boolean.logicalValue = logicalValue;
-    return bf;
-}
-
-// Function Call Factor Node Constructor
-Factor* newFuncCallFactor(char* funcName, Expression* arguments) {
-    Factor* fcf = (Factor*)malloc(sizeof(Factor));
-    fcf->type = FunctionCall;
-    fcf->facU.funcCall.funcName = funcName;
-    fcf->facU.funcCall.arguments = arguments;
-    return fcf;
-}
-
-// Expression Factor Node Constructor
-Factor* newExpressionFactor(Expression* expression) {
-    Factor* ef = (Factor*)malloc(sizeof(Factor));
-    ef->type = ExpressionFT;
-    ef->facU.expr.expression = expression;
-    return ef;
-}
-
-// Unary Operator Factor Node Constructor
-Factor* newUnaryOperatorFactor(unaryOperation unOperator, Factor* operand) {
-    Factor* uf = (Factor*)malloc(sizeof(Factor));
-    uf->type = Unary;
-    uf->facU.unarFac.unOperator = unOperator;
-    uf->facU.unarFac.operand = operand;
-    return uf;
-}
-*/
 
 // - Add to List Functions ----------------
 
@@ -374,7 +272,7 @@ void freeVarDeclaration(VarDeclaration* vd) {
 void freeIdentifierList(IdentifierList* il) {
     while (il) {
         IdentifierList* next = il->next;
-        // free(il->identifier); -> As string são movidas para outra estrutura.
+        free(il->identifier);
         free(il);
         il = next;
     }
@@ -461,432 +359,273 @@ void freeExpression(Expression* e) {
                 free(e->exprU.funCallExpr.identifier);
                 freeExpression(e->exprU.funCallExpr.expressionList);
                 break;
-        }
-        free(e);
-        e = next;
-    }
-}
-
-/*
-// Free Expression Node Function
-void freeExpression(Expression* e) {
-    while (e) {
-        Expression* next = e->next;
-        switch (e->type) {
-            case SingleExpression:
-                freeSimpleExpression(e->exprU.singExp.simple);    
+            case ConstInt:
                 break;
-            case RelationalExpression:
-                freeSimpleExpression(e->exprU.relExp.left);
-                freeSimpleExpression(e->exprU.relExp.right);
+            case ConstBool:
                 break;
         }
         free(e);
         e = next;
     }
 }
-*/
-
-/*
-// Free Simple Expression Node Function
-void freeSimpleExpression(SimpleExpression* se) {
-    if (!se) return;
-    switch (se->type) {
-        case SingleSimpleExpression:
-            freeTerm(se->simpExprU.singleSimpExpr.term);
-            break;
-        case CompoundSimpleExpression:
-            freeTerm(se->simpExprU.compoundSimpExpr.left);
-            freeSimpleExpression(se->simpExprU.compoundSimpExpr.right);
-            break;
-    }
-    free(se);
-}
-
-// Free Term Node Function
-void freeTerm(Term* t) {
-    if (!t) return;
-    switch (t->type) {
-        case SingleTerm:
-            freeFactor(t->termU.singleTerm.factor);
-            break;
-        case CompoundTerm:
-            freeFactor(t->termU.compoundTerm.left);
-            freeTerm(t->termU.compoundTerm.right);
-            break;
-    }
-    free(t);
-}
-
-// Free Factor Node Function
-void freeFactor(Factor* f) {
-    if (!f) return;
-    switch (f->type) {
-        case Variable:
-            free(f->facU.var.identifier);
-            break;
-        case Number:
-            break;
-        case Boolean:
-            break;
-        case FunctionCall:
-            free(f->facU.funcCall.funcName);
-            freeExpression(f->facU.funcCall.arguments);
-            break;
-        case ExpressionFT:
-            freeExpression(f->facU.expr.expression);
-            break;
-        case Unary:
-            freeFactor(f->facU.unarFac.operand);
-            break;
-    }
-    free(f);
-}
-
-*/
 
 // - Print --------------------------------
 
+// Auxiliary Function For Indentation
+void printIndent(FILE* out, int level) {
+    for (int i = 0; i < level; i++) {
+        fprintf(out, "|  ");
+    }
+}
+
 // Abstract Syntax Tree Print Function
 void printAstRoot(Program* ast_root, FILE* out) {
-    printProgram(ast_root, out);
+    if (!ast_root) return;
+    printProgram(ast_root, out, 0);
 }
 
 // Program Node Print Function
-void printProgram(const Program* program, FILE* out) {
-    fprintf(out, "(program %s\n", program->identifier);
-    printBlock(program->block, out);
-    fprintf(out, ")\n");
+void printProgram(const Program* program, FILE* out, int level) {
+    if (!program) return;
+    printIndent(out, level);
+    fprintf(out, "[Program Node]\n");
+    printIndent(out, level + 1);
+    fprintf(out, "Identifier: %s\n", program->identifier);
+    printIndent(out, level + 1);
+    fprintf(out, "Block:\n");
+    printBlock(program->block, out, level + 2);
 }
 
 // Block Node Print Function
-void printBlock(const Block* block, FILE* out) {
-    fprintf(out, "(block \n(variable delcarations ");
-    printVarDeclaration(block->varDeclarations, out);
-    fprintf(out, ")\n(subroutine declarations ");
-    printSubRotDeclaration(block->subRotDeclarations, out);
-    fprintf(out, ")\n(command list ");
-    printCommand(block->commandList, out);
-    fprintf(out, ")\n)\n");
+void printBlock(const Block* block, FILE* out, int level) {
+    if (!block) return;
+    printIndent(out, level);
+    fprintf(out, "[Block Node]\n");
+
+    if (block->varDeclarations) {
+        printIndent(out, level + 1);
+        fprintf(out, "Var Decls:\n");
+        printVarDeclaration(block->varDeclarations, out, level + 2);
+    } else {
+        printIndent(out, level+1);
+        fprintf(out, "Var Decls: (empty)\n");
+    }
+
+    if (block->subRotDeclarations) {
+        printIndent(out, level+1);
+        fprintf(out, "SubRots:\n");
+        printSubRotDeclaration(block->subRotDeclarations, out, level+2);
+    }
+
+    if (block->commandList) {
+        printIndent(out, level+1);
+        fprintf(out, "Commands:\n");
+        printCommand(block->commandList, out, level+2);
+    }
 }
 
-// Variable Delcaration Node Print Function
-void printVarDeclaration(const VarDeclaration* varDecaration, FILE* out) {
-    for (; varDecaration; varDecaration = varDecaration->next) {
-        switch (varDecaration->type) {
-            case Int:
-                fprintf(out, "(int %s)", varDecaration->identifier);
-                break;
-            case Bool:
-                fprintf(out, "(boolean %s)", varDecaration->identifier);
-                break;
-        }
+// Variable Declaration Node Print Function
+void printVarDeclaration(const VarDeclaration* varDeclaration, FILE* out, int level) {
+    for (; varDeclaration; varDeclaration = varDeclaration->next) {
+        printIndent(out, level);
+        fprintf(out, "[VarDecl] Type: %s, ID: %s\n", 
+            (varDeclaration->type == Int ? "Integer" : "Boolean"),
+            varDeclaration->identifier);
     }
 }
 
 // Identifier List Node Print Function
 void printIdentifierList(const IdentifierList* identifierList, FILE* out) {
-    fprintf(out, "(");
+    fprintf(out, "[");
+    int first = 1;
     for (; identifierList; identifierList = identifierList->next) {
-        fprintf(out, "identifier %s ", identifierList->identifier);
+        if (!first) fprintf(out, ", ");
+        fprintf(out, "%s", identifierList->identifier);
+        first = 0;
     }
-    fprintf(out, ")");
+    fprintf(out, "]");
 }
 
 // Subroutine Declaration Node Print Function
-void printSubRotDeclaration(const SubRotDeclaration* subRotDeclaration, FILE* out) {
+void printSubRotDeclaration(const SubRotDeclaration* subRotDeclaration, FILE* out, int level) {
     for (; subRotDeclaration; subRotDeclaration = subRotDeclaration->next) {
-        switch (subRotDeclaration->type) {
-            case Proc:
-                fprintf(out, "(procedure %s (formal parameters ", subRotDeclaration->subrotU.procInfo.identifier);
-                printVarDeclaration(subRotDeclaration->subrotU.procInfo.formParams, out);
-                printSubRotBlock(subRotDeclaration->subrotU.funcInfo.subRotBlock, out);
-                fprintf(out, ") )");
-                break;
-            case Func:
-                switch (subRotDeclaration->subrotU.funcInfo.returnType) {
-                    case Int:
-                        fprintf(out, "(function %s -> int (formal parameters ", subRotDeclaration->subrotU.funcInfo.identifier);
-                        break;
-                    case Bool:
-                        fprintf(out, "(function %s -> bool (formal parameters ", subRotDeclaration->subrotU.funcInfo.identifier);
-                        break;
-                }
-                printVarDeclaration(subRotDeclaration->subrotU.funcInfo.formParams, out);
-                printSubRotBlock(subRotDeclaration->subrotU.funcInfo.subRotBlock, out);
-                fprintf(out, ") )");
-                break;
+        printIndent(out, level);
+        if (subRotDeclaration->type == Proc) {
+            fprintf(out, "[Procedure Decl] ID: %s\n", subRotDeclaration->subrotU.procInfo.identifier);
+            
+            printIndent(out, level + 1);
+            fprintf(out, "Parameters:\n");
+            printVarDeclaration(subRotDeclaration->subrotU.procInfo.formParams, out, level + 2);
+
+            printIndent(out, level + 1);
+            fprintf(out, "Body:\n");
+            if (subRotDeclaration->subrotU.procInfo.subRotBlock) {
+                 printSubRotBlock(subRotDeclaration->subrotU.procInfo.subRotBlock, out, level + 2);
+            }
+        } else {
+            fprintf(out, "[Function Decl] ID: %s, Return: %s\n", 
+                subRotDeclaration->subrotU.funcInfo.identifier,
+                (subRotDeclaration->subrotU.funcInfo.returnType == Int ? "Int" : "Bool"));
+            
+            printIndent(out, level + 1);
+            fprintf(out, "Parameters:\n");
+            printVarDeclaration(subRotDeclaration->subrotU.funcInfo.formParams, out, level+2);
+
+            printIndent(out, level+1);
+            fprintf(out, "Body:\n");
+            if (subRotDeclaration->subrotU.funcInfo.subRotBlock) {
+                 printSubRotBlock(subRotDeclaration->subrotU.funcInfo.subRotBlock, out, level+2);
+            }
         }
     }
 }
 
 // Subroutine Block Node Print Function
-void printSubRotBlock(const SubRotBlock* subRotBlock, FILE* out) {
-    fprintf(out, "(subroutine block; (local variables ");
-    printVarDeclaration(subRotBlock->varDeclarations, out);
-    fprintf(out, ") (subroutine commands ");
-    printCommand(subRotBlock->commands, out);
-    fprintf(out, ") )");
+void printSubRotBlock(const SubRotBlock* subRotBlock, FILE* out, int level) {
+    if (!subRotBlock) return;
+    printIndent(out, level);
+    fprintf(out, "[SubRoutine Block]\n");
+    
+    if (subRotBlock->varDeclarations) {
+        printIndent(out, level + 1);
+        fprintf(out, "Local Vars:\n");
+        printVarDeclaration(subRotBlock->varDeclarations, out, level + 2);
+    }
+    
+    printIndent(out, level + 1);
+    fprintf(out, "Cmd List:\n");
+    printCommand(subRotBlock->commands, out, level + 2);
 }
 
 // Command Node Print Function
-void printCommand(const Command* command, FILE* out) {
+void printCommand(const Command* command, FILE* out, int level) {
     for (; command; command = command->next) {
+        printIndent(out, level);
         switch (command->type) {
             case Assign:
-                fprintf(out, "(%s assign command: ", command->cmdU.assignInfo.identifier);
-                printExpression(command->cmdU.assignInfo.expression, out);
-                fprintf(out, ")\n");
+                fprintf(out, "[Assign Cmd]\n");
+                printIndent(out, level + 1);
+                fprintf(out, "Target ID: %s\n", command->cmdU.assignInfo.identifier);
+                printIndent(out, level + 1);
+                fprintf(out, "Expr:\n");
+                printExpression(command->cmdU.assignInfo.expression, out, level + 2);
                 break;
+
             case ProcCall:
-                fprintf(out, "(%s procedure call command: ", command->cmdU.procCallInfo.identifier);
-                printExpression(command->cmdU.procCallInfo.expressionList, out);
-                fprintf(out, ")\n");
+                fprintf(out, "[ProcCall Cmd]\n");
+                printIndent(out, level + 1);
+                fprintf(out, "Proc ID: %s\n", command->cmdU.procCallInfo.identifier);
+                printIndent(out, level + 1);
+                fprintf(out, "Args:\n");
+                printExpression(command->cmdU.procCallInfo.expressionList, out, level + 2);
                 break;
+
             case Conditional:
-                fprintf(out, "(conditional command - if (");
-                printExpression(command->cmdU.condInfo.condExpression, out);
-                fprintf(out, ")\ndo (");
-                printCommand(command->cmdU.condInfo.cmdIf, out);
-                fprintf(out, ")\nelse (");
-                printCommand(command->cmdU.condInfo.cmdElse, out);
-                fprintf(out, ")\n");
-                break;struct VarDeclaration* varDeclarations;
-    struct Command* commands;
+                fprintf(out, "[If Cmd]\n");
+                printIndent(out, level + 1);
+                fprintf(out, "Condition:\n");
+                printExpression(command->cmdU.condInfo.condExpression, out, level + 2);
+                
+                printIndent(out, level + 1);
+                fprintf(out, "Then Branch:\n");
+                printCommand(command->cmdU.condInfo.cmdIf, out, level + 2);
+                
+                if (command->cmdU.condInfo.cmdElse) {
+                    printIndent(out, level + 1);
+                    fprintf(out, "Else Branch:\n");
+                    printCommand(command->cmdU.condInfo.cmdElse, out, level + 2);
+                }
+                break;
+
             case Loop:
-                fprintf(out, "(loop command - while (");
-                printExpression(command->cmdU.loopInfo.loopExpression, out);
-                fprintf(out, ")\ndo(");
-                printCommand(command->cmdU.loopInfo.cmdLoop, out);
-                fprintf(out, ")\n");
+                fprintf(out, "[While Cmd]\n");
+                printIndent(out, level + 1);
+                fprintf(out, "Condition:\n");
+                printExpression(command->cmdU.loopInfo.loopExpression, out, level + 2);
+                printIndent(out, level + 1);
+                fprintf(out, "Body:\n");
+                printCommand(command->cmdU.loopInfo.cmdLoop, out, level + 2);
                 break;
+
             case Read:
-                fprintf(out, "(read command: ");
+                fprintf(out, "[Read Cmd] Targets: ");
                 printIdentifierList(command->cmdU.readInfo.identifiers, out);
-                fprintf(out, ")\n");
+                fprintf(out, "\n");
                 break;
+
             case Write:
-                fprintf(out, "(write command: ");
-                printExpression(command->cmdU.writeInfo.expressionList, out);
-                fprintf(out, ")\n");
+                fprintf(out, "[Write Cmd] Exprs:\n");
+                printExpression(command->cmdU.writeInfo.expressionList, out, level + 1);
                 break;
         }
     }
 }
 
-typedef enum {Equal, Different, Less, LessEqual, Greater, GreaterEqual, Plus, Minus, Or, Multiplication, Division, And} Operator;
-
 // Expression Node Print Function
-void prinExpression(const Expression* expression, FILE* out) {
+void printExpression(const Expression* expression, FILE* out, int level) {
     for (; expression; expression = expression->next) {
+        printIndent(out, level);
         switch (expression->type) {
             case Binary:
-                fprintf(out, "(binary expression (left ");
-                printExpression(expression->exprU.binExpr.left, out);
-                fprintf(out, ") (operator ");
+                fprintf(out, "[Binary Expr]\n");
+                printIndent(out, level + 1);
+                fprintf(out, "Op: ");
                 switch (expression->exprU.binExpr.operator) {
-                    case Equal:
-                        fprintf(out, "=");
-                        break;
-                    case Different:
-                        fprintf(out, "<>");
-                        break;
-                    case Less:
-                        fprintf(out, "<");
-                        break;
-                    case LessEqual:
-                        fprintf(out, "<=");
-                        break;
-                    case Greater:
-                        fprintf(out, ">");
-                        break;
-                    case GreaterEqual:
-                        fprintf(out, ">=");
-                        break;
-                    case Plus:
-                        fprintf(out, "+");
-                        break;
-                    case Minus:
-                        fprintf(out, "-");
-                        break;
-                    case Or:
-                        fprintf(out, "OR");
-                        break;
-                    case Multiplication:
-                        fprintf(out, "*");
-                        break;
-                    case Division:
-                        fprintf(out, "/");
-                        break;
-                    case And:
-                        fprintf(out, "AND");
-                        break;
+                    case Equal: fprintf(out, "=\n"); break;
+                    case Different: fprintf(out, "<>\n"); break;
+                    case Less: fprintf(out, "<\n"); break;
+                    case LessEqual: fprintf(out, "<=\n"); break;
+                    case Greater: fprintf(out, ">\n"); break;
+                    case GreaterEqual: fprintf(out, ">=\n"); break;
+                    case Plus: fprintf(out, "+\n"); break;
+                    case Minus: fprintf(out, "-\n"); break;
+                    case Or: fprintf(out, "OR\n"); break;
+                    case Multiplication: fprintf(out, "*\n"); break;
+                    case Division: fprintf(out, "DIV\n"); break;
+                    case And: fprintf(out, "AND\n"); break;
                 }
-                fprintf(out, " ) (right");
-                printExpression(expression->exprU.binExpr.right, out);
-                fprintf(out, ") )");
+                printIndent(out, level + 1);
+                fprintf(out, "Left:\n");
+                printExpression(expression->exprU.binExpr.left, out, level + 2);
+                printIndent(out, level + 1);
+                fprintf(out, "Right:\n");
+                printExpression(expression->exprU.binExpr.right, out, level + 2);
                 break;
+
+            case Unary:
+                fprintf(out, "[Unary Expr]\n");
+                printIndent(out, level + 1);
+                fprintf(out, "Op: ");
+                switch (expression->exprU.unyExpr.operator) {
+                    case Minus: fprintf(out, "-\n"); break;
+                    case Plus: fprintf(out, "+\n"); break;
+                    case Not: fprintf(out, "NOT\n"); break;
+                    default: fprintf(out, "?\n"); break;
+                }
+                printIndent(out, level + 1);
+                fprintf(out, "Operand:\n");
+                printExpression(expression->exprU.unyExpr.right, out, level + 2);
+                break;
+
             case Var:
-                fprintf(out, "( variable expression: %s)", expression->exprU.varExpr.identifier);
+                fprintf(out, "[Var Expr] ID: %s\n", expression->exprU.varExpr.identifier);
                 break;
+
             case ConstInt:
-                fprintf(out, "( constant integer expression: %i)", expression->exprU.intExpr.number);
+                fprintf(out, "[ConstInt Expr] Value: %d\n", expression->exprU.intExpr.number);
                 break;
+
             case ConstBool:
-                fprintf(out, "( constant boolean expression: ");
-                switch (expression->exprU.boolExpr.boolean) {
-                    case BoolFalse:
-                        fprintf(out, "false");
-                        break;
-                    case BoolTrue:
-                        fprintf(out, "true");
-                        break;
-                }
-                fprintf(out, ")");
+                fprintf(out, "[ConstBool Expr] Value: %s\n", 
+                    expression->exprU.boolExpr.boolean == BoolTrue ? "true" : "false");
                 break;
+
             case FuncCall:
-                fprintf(out, "(%s function call - (expression list ", expression->exprU.funCallExpr.identifier);
-                printExpression(expression->exprU.funCallExpr.expressionList, out);
-                fprintf(out, ") )");
+                fprintf(out, "[FuncCall Expr] ID: %s\n", expression->exprU.funCallExpr.identifier);
+                printIndent(out, level + 1);
+                fprintf(out, "Args:\n");
+                printExpression(expression->exprU.funCallExpr.expressionList, out, level + 2);
                 break;
         }
     }
 }
-
-/*
-// Expression Node Print Function
-void printExpression(const Expression* expression, FILE* out) {
-    for (; expression; expression = expression->next) {
-        switch (expression->type) {
-            case SingleExpression:
-                printSimpleExpression(expression->exprU.singExp.simple, out);
-                break;
-            case RelationalExpression:
-                fprintf(out, "(relational expression: ");
-                printSimpleExpression(expression->exprU.relExp.left, out);
-                const char *op;
-                switch (expression->exprU.relExp.relOperator) {
-                    case Equal:
-                        op = "=";
-                        break;
-                    case Different:
-                        op = "!=";
-                        break;
-                    case Less:
-                        op = "<";
-                        break;
-                    case LessEqual:
-                        op = "<=";
-                        break;
-                    case Greater:
-                        op = ">";
-                        break;
-                    case GreaterEqual:
-                        op = ">=";
-                        break;
-                }
-                fprintf(out, " %s ", op);
-                printSimpleExpression(expression->exprU.relExp.right, out);
-                fprintf(out, ")");
-                break;
-        }
-    }
-}
-
-// Simple Expression Node Print Function
-void printSimpleExpression(const SimpleExpression* simpleExpression, FILE* out) {
-    switch (simpleExpression->type) {
-        case SingleSimpleExpression:
-            printTerm(simpleExpression->simpExprU.singleSimpExpr.term, out);
-            break;
-        case CompoundSimpleExpression:
-            fprintf(out, "(compound simple expression: ");
-            printTerm(simpleExpression->simpExprU.compoundSimpExpr.left, out);
-            const char *op;
-            switch (simpleExpression->simpExprU.compoundSimpExpr.termOperator) {
-                case Plus:
-                    op = "+";
-                    break;
-                case Minus:
-                    op = "-";
-                    break;
-                case Or:
-                    op = "OR";
-                    break;
-            }
-            fprintf(out, " %s ", op);
-            printTerm(simpleExpression->simpExprU.compoundSimpExpr.right, out);
-            fprintf(out, ")");
-            break;
-    }
-}
-
-// Term Node Print Function
-void printTerm(const Term* term, FILE* out) {
-    switch (term->type) {
-        case SingleTerm:
-            printFactor(term->termU.singleTerm.factor, out);
-            break;
-        case CompoundTerm:
-            fprintf(out, "(compound term: ");
-            printFactor(term->termU.compoundTerm.left, out);
-            const char *op;
-            switch (term->termU.compoundTerm.factOperator) {
-                case Multiplication:
-                    op = "*";
-                    break;
-                case Division:
-                    op = "/";
-                    break;
-                case And:
-                    op = "AND";
-                    break;
-            }
-            fprintf(out, " %s ", op);
-            printFactor(term->termU.compoundTerm.right, out);
-            fprintf(out, ")");
-            break;
-    }
-}
-
-// Factor Node Print Function
-void printFactor(const Factor* factor, FILE* out) {
-    switch (factor->type) {
-        case Variable:
-            fprintf(out, "(variable factor: %s)", factor->facU.var.identifier);
-            break;
-        case Number:
-            fprintf(out, "(number factor: %i)", factor->facU.num.value);
-            break;
-        case Boolean:
-            fprintf(out, "(boolean factor: %i)", factor->facU.boolean.logicalValue);
-            break;
-        case FunctionCall:
-            fprintf(out, "(%s function call factor - arguments: ", factor->facU.funcCall.funcName);
-            printExpression(factor->facU.funcCall.arguments, out);
-            fprintf(out, ")");
-            break;
-        case ExpressionFT:
-            fprintf(out, "(expression factor: ");
-            printExpression(factor->facU.expr.expression, out);
-            fprintf(out, ")");
-            break;
-        case Unary:
-            fprintf(out, "(unary operation factor: ");
-            const char *op;
-            switch (factor->facU.unarFac.unOperator) {
-                case Negative:
-                    op = "-";
-                    break;
-                case Not:
-                    op = "NOT";
-                    break;
-            }
-            fprintf(out, "%s ", op);
-            printFactor(factor->facU.unarFac.operand, out);
-            fprintf(out, ")");
-            break;
-    }
-}
-
-*/

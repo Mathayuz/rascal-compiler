@@ -19,29 +19,25 @@ Program* ast_root = NULL;
 
 %union {
     Program* prog;
-
     Block* block;
-
     VarDeclaration* varDecl;
     IdentifierList* idList;
-    varType vType;
-
     SubRotDeclaration* subRotDecl;
     SubRotBlock* subRotBlock;
-
     Command* cmd;
-
     Expression* expr;
-    Operator op;
-    BooleanValue bool;
 
-    int dval;
+    varType vType;
+    Operator op;
+    BooleanValue boolVal;
+
+    int ival;
     char* sval;
 }
 
 %token PROGRAM TBEGIN END PROCEDURE FUNCTION VAR INTEGER BOOLEAN TFALSE TTRUE WHILE DO IF THEN ELSE READ WRITE AND OR NOT DIV DIF LTE GTE ASSIGN
 %token <sval> ID
-%token <dval> NUM
+%token <ival> NUM
 
 // Program
 %type <prog> program
@@ -65,40 +61,40 @@ Program* ast_root = NULL;
 // Expression Section
 %type <expr> expr_list_optional expr_list expr simple_expr term factor variable func_call
 %type <op> relational;
-%type <bool> logical;
+%type <boolVal> logical;
 
 %nonassoc '=' DIF '<' LTE '>' GTE
 %left '+' '-' OR
 %left '*' DIV AND
 %left NOT
 
-%nonassoc IF
+%nonassoc THEN
 %nonassoc ELSE
 
 %%
 
 program
     : PROGRAM ID ';' block '.'
-      { 
+    { 
         $$ = newProgram($2, $4);
         ast_root = $$;
-      }
+    }
     ;
 
 block
     : var_decl_sec_optional subr_decl_sec_optional compound_cmd 
-      {
+    {
         $$ = newBlock($1, $2, $3);
-      }
+    }
     ;
 
 var_decl_sec_optional
-    : var_decl_sec      {$$ = $1;}
-    | /* empty */       {$$ = NULL;}
+    : var_decl_sec                  {$$ = $1;}
+    | /* empty */                   {$$ = NULL;}
     ;
 
 var_decl_sec
-    : VAR var_decl_list {$$ = $2;}
+    : VAR var_decl_list             {$$ = $2;}
     ;
 
 var_decl_list
@@ -109,186 +105,182 @@ var_decl_list
 var_decl
     : id_list ':' type  
     {
-    IdentifierList* it = $1;
-    VarDeclaration* list = NULL;
-    while (it) {
-        VarDeclaration* node = newVarDeclaration($3, it->identifier);
-        list = addVarDeclaration(list, node);
-        it = it->next;
-    }
-    freeIdentifierList($1);
-    $$ = list;
+        IdentifierList* it = $1;
+        VarDeclaration* list = NULL;
+        while (it) {
+            VarDeclaration* node = newVarDeclaration($3, it->identifier);
+            it->identifier = NULL; // identifier belongs to the new node
+            list = addVarDeclaration(list, node);
+            it = it->next;
+        }
+        freeIdentifierList($1);
+        $$ = list;
     }
     ;
 
 id_list
-    : ID                {$$ = newIdentifierList($1);}
-    | id_list ',' ID    {$$ = addIdentifier($1, newIdentifierList($3));}
+    : ID                            {$$ = newIdentifierList($1);}
+    | id_list ',' ID                {$$ = addIdentifier($1, newIdentifierList($3));}
     ;
 
 type
-    : INTEGER   {$$ = Int;}
-    | BOOLEAN   {$$ = Bool;}
+    : INTEGER                       {$$ = Int;}
+    | BOOLEAN                       {$$ = Bool;}
     ;
 
 subr_decl_sec_optional
-    : subr_decl_sec     {$$ = $1;}
-    | /* empty */       {$$ = NULL;}
+    : subr_decl_sec                 {$$ = $1;}
+    | /* empty */                   {$$ = NULL;}
     ;
 
 subr_decl_sec
-    : subr_decl ';'                  {$$ = $1;}
-    | subr_decl_sec subr_decl ';'    {$$ = addSubRotDeclaration($1, $2);}
+    : subr_decl ';'                 {$$ = $1;}
+    | subr_decl_sec subr_decl ';'   {$$ = addSubRotDeclaration($1, $2);}
     ;
 
 subr_decl
-    : proc_decl                      {$$ = $1;}
-    | func_decl                      {$$ = $1;}
+    : proc_decl                     {$$ = $1;}
+    | func_decl                     {$$ = $1;}
     ;
 
 proc_decl
-    : PROCEDURE ID form_param_optional ';' subr_block   {$$ = newProcDeclaration($2, $3, $5);}
+    : PROCEDURE ID form_param_optional ';' subr_block           {$$ = newProcDeclaration($2, $3, $5);}
     ;
 
 func_decl
-    : FUNCTION ID form_param_optional ':' type ';' subr_block {$$ = newFuncDeclaration($2, $3, $5, $7);}
+    : FUNCTION ID form_param_optional ':' type ';' subr_block   {$$ = newFuncDeclaration($2, $3, $5, $7);}
     ;
 
 form_param_optional
-    : form_param        {$$ = $1;}
-    | /* empty */       {$$ = NULL;}
+    : form_param                    {$$ = $1;}
+    | /* empty */                   {$$ = NULL;}
     ;
 
 form_param
-    : '(' form_param_list ')'           {$$ = $2;}
+    : '(' form_param_list ')'       {$$ = $2;}
     ;
 
 form_param_list
-    : var_decl                        {$$ = $1;}
-    | form_param_list ';' var_decl    {$$ = addVarDeclaration($1, $3);}
+    : var_decl                      {$$ = $1;}
+    | form_param_list ';' var_decl  {$$ = addVarDeclaration($1, $3);}
     ;
 
 subr_block
-    : var_decl_sec_optional compound_cmd    {$$ = newSubRotBlock($1, $2);}
+    : var_decl_sec_optional compound_cmd                        {$$ = newSubRotBlock($1, $2);}
     ;
 
 compound_cmd
-    : TBEGIN cmd_list END   {$$ = $2;}
+    : TBEGIN cmd_list END           {$$ = $2;}
     ;
 
 cmd_list
-    : cmd                   {$$ = $1;}
-    | cmd_list ';' cmd      {$$ = addCommand($1, $3);}
+    : cmd                           {$$ = $1;}
+    | cmd_list ';' cmd              {$$ = addCommand($1, $3);}
     ;
 
 cmd
-    : assign_cmd            {$$ = $1;}
-    | proc_call_cmd         {$$ = $1;}
-    | cond_cmd              {$$ = $1;}
-    | loop_cmd              {$$ = $1;}
-    | read_cmd              {$$ = $1;}
-    | write_cmd             {$$ = $1;}
-    | compound_cmd          {$$ = $1;}
+    : assign_cmd                    {$$ = $1;}
+    | proc_call_cmd                 {$$ = $1;}
+    | cond_cmd                      {$$ = $1;}
+    | loop_cmd                      {$$ = $1;}
+    | read_cmd                      {$$ = $1;}
+    | write_cmd                     {$$ = $1;}
+    | compound_cmd                  {$$ = $1;}
     ;
 
 assign_cmd
-    : ID ASSIGN expr        {$$ = newAssignCommand($1, $3);}
+    : ID ASSIGN expr                {$$ = newAssignCommand($1, $3);}
     ;
 
 proc_call_cmd
-    : ID '(' expr_list_optional ')'     {$$ = newProcCallCommand($1, $3);}
-    ;
-
-expr_list_optional
-    : expr_list         {$$ = $1}
-    | /* empty */       {$$ = NULL;}
+    : ID '(' expr_list_optional ')' {$$ = newProcCallCommand($1, $3);}
     ;
 
 cond_cmd
-    : IF expr THEN cmd else_part_optional   {$$ = newCondCommand($2, $4, $5);}
+    : IF expr THEN cmd else_part_optional                       {$$ = newCondCommand($2, $4, $5);}
     ;
 
 else_part_optional
-    : ELSE cmd          {$$ = $2;}
-    | /* empty */       {$$ = NULL;}
+    : ELSE cmd                      {$$ = $2;}
+    | /* empty */                   {$$ = NULL;}
     ;
 
 loop_cmd
-    : WHILE expr DO cmd     {$$ = newLoopCommand($2, $4);}
+    : WHILE expr DO cmd             {$$ = newLoopCommand($2, $4);}
     ;
 
 read_cmd
-    : READ '(' id_list ')'  {$$ = newReadCommand($3);}
+    : READ '(' id_list ')'          {$$ = newReadCommand($3);}
     ;
 
 write_cmd
-    : WRITE '(' expr_list ')'   {$$ = newWriteCommand($3);}
+    : WRITE '(' expr_list ')'       {$$ = newWriteCommand($3);}
+    ;
+
+expr_list_optional
+    : expr_list                     {$$ = $1;}
+    | /* empty */                   {$$ = NULL;}
     ;
 
 expr_list
-    : expr                  {$$ = $1;}
-    | expr_list ',' expr    {$$ = addExpression($1, $3);}
+    : expr                          {$$ = $1;}
+    | expr_list ',' expr            {$$ = addExpression($1, $3);}
     ;
 
 expr
-    : simple_expr                           {$$ = $1;}
-    | simple_expr relational simple_expr    {$$ = newBinaryExpression($1, $2, $3);}
+    : simple_expr                                               {$$ = $1;}
+    | simple_expr relational simple_expr                        {$$ = newBinaryExpression($1, $2, $3);}
     ;
 
 relational
-    : '='       {$$ = Equal;}
-    | DIF       {$$ = Different;}
-    | '<'       {$$ = Less;}
-    | LTE       {$$ = LessEqual;}
-    | '>'       {$$ = Greater;}
-    | GTE       {$$ = GreaterEqual;}
+    : '='                           {$$ = Equal;}
+    | DIF                           {$$ = Different;}
+    | '<'                           {$$ = Less;}
+    | LTE                           {$$ = LessEqual;}
+    | '>'                           {$$ = Greater;}
+    | GTE                           {$$ = GreaterEqual;}
     ;
 
 simple_expr
-    : term                      {$$ = $1;}
-    | '+' term                  {$$ = newConstantIntegerExpression($2);}
-    | '-' term                  {$$ = newUnaryExpression(Minus, $2);}
-    | simple_expr '+' term      {$$ = newBinaryExpression($1, Plus, $3);}
-    | simple_expr '-' term      {$$ = newBinaryExpression($1, Minus, $3);}
-    | simple_expr OR term       {$$ = newBinaryExpression($1, Or, $3);}
+    : term                          {$$ = $1;}
+    | '+' term                      {$$ = $2;}
+    | '-' term                      {$$ = newUnaryExpression(Minus, $2);}
+    | simple_expr '+' term          {$$ = newBinaryExpression($1, Plus, $3);}
+    | simple_expr '-' term          {$$ = newBinaryExpression($1, Minus, $3);}
+    | simple_expr OR term           {$$ = newBinaryExpression($1, Or, $3);}
     ;
 
 term
-    : factor                    {$$ = $1;}
-    | term '*' factor           {$$ = newBinaryExpression($1, Multiplication, $3);}
-    | term DIV factor           {$$ = newBinaryExpression($1, Division, $3);}
-    | term AND factor           {$$ = newBinaryExpression($1, And, $3);}
+    : factor                        {$$ = $1;}
+    | term '*' factor               {$$ = newBinaryExpression($1, Multiplication, $3);}
+    | term DIV factor               {$$ = newBinaryExpression($1, Division, $3);}
+    | term AND factor               {$$ = newBinaryExpression($1, And, $3);}
     ;
 
 factor
-    : variable                  {$$ = newVariableExpression($1);}
-    | NUM                       {$$ = newConstantIntegerExpression($1);}
-    | logical                   {$$ = newConstantBooleanExpression($1);}
-    | func_call                 {$$ = $1;}
-    | '(' expr ')'              {$$ = $2;}
-    | NOT factor                {$$ = newUnaryExpression(Not, $2);}
+    : variable                      {$$ = newVariableExpression($1);}
+    | NUM                           {$$ = newConstantIntegerExpression($1);}
+    | logical                       {$$ = newConstantBooleanExpression($1);}
+    | func_call                     {$$ = $1;}
+    | '(' expr ')'                  {$$ = $2;}
+    | NOT factor                    {$$ = newUnaryExpression(Not, $2);}
     ;
 
 variable
-    : ID                        {$$ = $1;}
+    : ID                            {$$ = $1;}
     ;
 
 logical
-    : TTRUE                     {$$ = BoolTrue;}
-    | TFALSE                    {$$ = BoolFalse;}
+    : TTRUE                         {$$ = BoolTrue;}
+    | TFALSE                        {$$ = BoolFalse;}
     ;
 
 func_call
-    : ID '(' expr_list_optional ')'     {$$ = newFunctionCallExpression($1, $3);}
+    : ID '(' expr_list_optional ')' {$$ = newFunctionCallExpression($1, $3);}
     ;
 
 %%
 
 void yyerror(const char *s){
-    printf("ERRO SINTÁTICO na linha %d: %s\n", yylineno, s);
-}
-
-int main(void) {
-    yyparse();
-    printf("\n");
+    printf("Erro Sintático na linha %d: %s\n", yylineno, s);
 }
