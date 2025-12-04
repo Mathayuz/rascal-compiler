@@ -583,6 +583,7 @@ void printExpression(const Expression* expression, FILE* out, int level) {
                     case Multiplication: fprintf(out, "*\n"); break;
                     case Division: fprintf(out, "DIV\n"); break;
                     case And: fprintf(out, "AND\n"); break;
+                    case Not: fprintf(out, "INVALID (NOT)\n"); break;
                 }
                 printIndent(out, level + 1);
                 fprintf(out, "Left:\n");
