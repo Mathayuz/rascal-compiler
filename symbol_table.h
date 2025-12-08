@@ -22,6 +22,7 @@ typedef enum {
 typedef struct Symbol {
     char *name;
     Category category;
+    int level;
     Type type;
     int offset;
     struct Symbol *next;
@@ -32,6 +33,7 @@ typedef struct Scope {
     Symbol *symbols;
     struct Scope *parent;
     int next_offset;
+    int level;
 } Scope;
 
 // Ponteiro para o escopo atual

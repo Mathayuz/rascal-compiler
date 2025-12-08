@@ -13,6 +13,11 @@ void enter_scope() {
     s->parent = current_scope;
     s->next_offset = 0;
 
+    if (current_scope == NULL)
+        s->level = 0;
+    else
+        s->level = current_scope->level + 1;
+
     current_scope = s;
 }
 
@@ -75,8 +80,8 @@ Symbol* install(char *name, Category cat, Type type) {
 
     Symbol *exist = lookup_local(name);
     if (exist != NULL) {
-        printf("Warning: redeclaration of %s\n", name);
-        return exist;
+        printf("Erro semântico: identificador '%s' declarado duas vezes no mesmo escopo\n", name);
+        exit(1);
     }
 
     Symbol *s = (Symbol*) malloc(sizeof(Symbol));
@@ -90,3 +95,4 @@ Symbol* install(char *name, Category cat, Type type) {
 
     return s;
 }
+

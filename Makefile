@@ -7,8 +7,10 @@ LIBS = -lfl
 all: rascalc
 
 # Linking
-rascalc: rascal_parser.tab.o lex.yy.o rascal_ast.o main.o
-	$(CC) $(CFLAGS) -o rascalc rascal_parser.tab.o lex.yy.o rascal_ast.o main.o $(LIBS)
+rascalc: rascal_parser.tab.o lex.yy.o rascal_ast.o symbol_table.o semantics.o main.o
+	$(CC) $(CFLAGS) -o rascalc \
+		rascal_parser.tab.o lex.yy.o rascal_ast.o \
+		symbol_table.o semantics.o main.o $(LIBS)
 
 # Bison Compilation
 rascal_parser.tab.c rascal_parser.tab.h: rascal_parser.y
@@ -31,12 +33,19 @@ rascal_parser.tab.o: rascal_parser.tab.c rascal_ast.h
 rascal_ast.o: rascal_ast.c rascal_ast.h
 	$(CC) $(CFLAGS) -c rascal_ast.c
 
+# Symbol Table
+symbol_table.o: symbol_table.c symbol_table.h
+	$(CC) $(CFLAGS) -c symbol_table.c
+
+# Semantics
+semantics.o: semantics.c semantics.h rascal_ast.h symbol_table.h
+	$(CC) $(CFLAGS) -c semantics.c
+
 # Main
-main.o: main.c rascal_ast.h rascal_parser.tab.h
+main.o: main.c rascal_ast.h rascal_parser.tab.h semantics.h
 	$(CC) $(CFLAGS) -c main.c
 
 # Utils
-
 clean:
 	rm -f rascalc *.o rascal_parser.tab.* lex.yy.c parser.output
 
@@ -50,4 +59,4 @@ runOK:
 runErro:
 	./rascalc exemplo_erro.ras
 
-.PHONY: all clean run
+.PHONY: all clean run runOK runErro

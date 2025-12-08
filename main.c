@@ -1,14 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "rascal_parser.tab.h"
 #include "rascal_ast.h"
+#include "semantics.h"     // << ADICIONADO
+// futuramente: #include "codegen.h"
 
 extern int yylineno;
 extern FILE *yyin;
+extern Program *ast_root;   // vem do rascal_ast.h
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        fprintf(stderr, "Uso: %s <arquivo_entrada> [arquivo_saida]\n", argv[0]);
+        fprintf(stderr, "Uso: %s <arquivo_entrada>\n", argv[0]);
         return 1;
     }
 
@@ -19,14 +23,27 @@ int main(int argc, char *argv[]) {
     }
     yyin = myfile;
 
-    if (yyparse() == 0 && ast_root != NULL) {
-        printf("Printing AST:\n");
-        printAstRoot(ast_root, stdout);
-        freeAstRoot(ast_root);
-    } else {
+    /* === PARSING === */
+    if (yyparse() != 0 || ast_root == NULL) {
         fprintf(stderr, "Parsing failed.\n");
+        fclose(myfile);
+        return 1;
     }
 
+    printf("Parsing OK.\n");
+
+    /* === SEMANTIC ANALYSIS === */
+    semantic_check(ast_root);
+    printf("Semantic analysis OK.\n");
+
+    /* === DEBUG: PRINT AST === */
+    printf("\nPrinting AST:\n");
+    printAstRoot(ast_root, stdout);
+
+    /* === FUTURAMENTE: GERAÇÃO DE CÓDIGO MEPA === */
+    // codegen(ast_root, output_file);
+
+    freeAstRoot(ast_root);
     fclose(myfile);
     return 0;
 }
