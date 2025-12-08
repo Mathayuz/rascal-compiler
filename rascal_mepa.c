@@ -132,7 +132,7 @@ void gen_subrot_decl(SubRotDeclaration* sd, CodeGenContext* ctx) {
         enter_scope();
         // Parameters
         VarDeclaration* params = (sd->type == Proc ? sd->subrotU.procInfo.formParams : sd->subrotU.funcInfo.formParams);
-        int n_params = count_params(params);
+        int n_params = count_vars(params);
         int i = 0;
         VarDeclaration* p_iter = params;
         while (p_iter) {

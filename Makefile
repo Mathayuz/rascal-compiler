@@ -7,10 +7,10 @@ LIBS = -lfl
 all: rascalc
 
 # Linking
-rascalc: rascal_parser.tab.o lex.yy.o rascal_ast.o symbol_table.o semantics.o main.o
+rascalc: rascal_parser.tab.o lex.yy.o rascal_ast.o symbol_table.o semantics.o rascal_mepa.o main.o
 	$(CC) $(CFLAGS) -o rascalc \
 		rascal_parser.tab.o lex.yy.o rascal_ast.o \
-		symbol_table.o semantics.o main.o $(LIBS)
+		symbol_table.o semantics.o rascal_mepa.o main.o $(LIBS)
 
 # Bison Compilation
 rascal_parser.tab.c rascal_parser.tab.h: rascal_parser.y
@@ -41,8 +41,12 @@ symbol_table.o: symbol_table.c symbol_table.h
 semantics.o: semantics.c semantics.h rascal_ast.h symbol_table.h
 	$(CC) $(CFLAGS) -c semantics.c
 
+# MEPA Code Generator
+rascal_mepa.o: rascal_mepa.c rascal_mepa.h rascal_ast.h symbol_table.h
+	$(CC) $(CFLAGS) -c rascal_mepa.c
+
 # Main
-main.o: main.c rascal_ast.h rascal_parser.tab.h semantics.h
+main.o: main.c rascal_ast.h rascal_parser.tab.h semantics.h rascal_mepa.h
 	$(CC) $(CFLAGS) -c main.c
 
 # Utils

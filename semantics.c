@@ -89,7 +89,7 @@ void semantic_check(Program *program) {
 // PROGRAMA
 static void check_program(Program *p) {
     /* Instala nome do programa como símbolo global */
-    install(p->identifier, CAT_PROGRAM, TYPE_VOID);
+    install(p->identifier, CAT_PROGRAM, TYPE_VOID, current_scope->level);
 
     if (p->block == NULL) {
         semantic_error("programa sem bloco");
@@ -127,7 +127,7 @@ static void check_var_declarations(VarDeclaration *list, int as_params) {
     while (v) {
         install(v->identifier,
                 as_params ? CAT_PARAM : CAT_VAR,
-                varType_to_type(v->type));
+                varType_to_type(v->type), current_scope->level);
         v = v->next;
     }
 }
@@ -141,12 +141,12 @@ static void predeclare_subroutines(SubRotDeclaration *list) {
         if (s->type == Proc) {
             install(s->subrotU.procInfo.identifier,
                     CAT_PROCEDURE,
-                    TYPE_VOID);
+                    TYPE_VOID, current_scope->level);
 
         } else {
             install(s->subrotU.funcInfo.identifier,
                     CAT_FUNCTION,
-                    varType_to_type(s->subrotU.funcInfo.returnType));
+                    varType_to_type(s->subrotU.funcInfo.returnType), current_scope->level);
         }
 
         s = s->next;
@@ -194,7 +194,7 @@ static void check_subroutine(SubRotDeclaration *srd) {
         enter_scope();
 
         /* Variável implícita de retorno */
-        install(name, CAT_VAR, ret_type);
+        install(name, CAT_VAR, ret_type, current_scope->level);
 
         /* Parâmetros */
         check_var_declarations(params, 1);

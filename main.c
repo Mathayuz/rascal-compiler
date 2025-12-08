@@ -36,51 +36,46 @@ int main(int argc, char *argv[]) {
     semantic_check(ast_root);
     printf("Semantic analysis OK.\n");
 
-    /* === DEBUG: PRINT AST === */
+    /* === PRINT AST === */
     printf("\nPrinting AST:\n");
     printAstRoot(ast_root, stdout);
 
-    /* === FUTURAMENTE: GERAÇÃO DE CÓDIGO MEPA === */
-    // codegen(ast_root, output_file);
-
     freeAstRoot(ast_root);
     fclose(myfile);
     return 0;
 }
 
-/*
-int main(int argc, char *argc[]) {
-    // ROTINA PARA TESTAR A GERAÇÃO DE CÓDIGO MEPA
-    if (argc < 2) {
-        fprintf(stderr, "Uso: %s <arquivo_entrada>\n", argv[0]);
-        return 1;
-    }
 
-    FILE *myfile = fopen(argv[1], "r");
-    if (!myfile) {
-        fprintf(stderr, "Erro ao abrir o arquivo: %s\n", argv[1]);
-        return 1;
-    }
-    yyin = myfile;
+// int main(int argc, char *argv[]) {
+//     // ROTINA PARA TESTAR A GERAÇÃO DE CÓDIGO MEPA
+//     if (argc < 2) {
+//         fprintf(stderr, "Uso: %s <arquivo_entrada>\n", argv[0]);
+//         return 1;
+//     }
 
-    if (yyparse() != 0 || ast_root == NULL) {
-        fprintf(stderr, "Parsing failed.\n");
-        fclose(myfile);
-        return 1;
-    }
+//     FILE *myfile = fopen(argv[1], "r");
+//     if (!myfile) {
+//         fprintf(stderr, "Erro ao abrir o arquivo: %s\n", argv[1]);
+//         return 1;
+//     }
+//     yyin = myfile;
 
-    printf("Parsing OK.\n");
+//     if (yyparse() != 0 || ast_root == NULL) {
+//         fprintf(stderr, "Parsing failed.\n");
+//         fclose(myfile);
+//         return 1;
+//     }
 
-    printf("\n--- AST ---\n");
-    printAstRoot(ast_root, stdout);
-    printf("\n-----------\n");
+//     printf("Parsing OK.\n");
 
-    printf("Gerando código MEPA para: %s\n", saida.mep);
-    generate_code(ast_root, saida.mep);
+//     printf("\n--- AST ---\n");
+//     printAstRoot(ast_root, stdout);
+//     printf("\n-----------\n");
 
-    freeAstRoot(ast_root);
-    fclose(myfile);
-    return 0;
-}
+//     printf("Gerando código MEPA para: %s\n", "saida.mep");
+//     generate_code(ast_root, "saida.mep");
 
-*/
+//     freeAstRoot(ast_root);
+//     fclose(myfile);
+//     return 0;
+// }
