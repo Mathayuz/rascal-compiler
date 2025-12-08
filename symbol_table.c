@@ -74,7 +74,7 @@ Symbol* lookup(char *name) {
 }
 
 // Instala um novo simbolo no escopo atual
-Symbol* install(char *name, Category cat, Type type) {
+Symbol* install(char *name, Category cat, Type type, int level) {
     if (current_scope == NULL)
         return NULL;
 
@@ -88,8 +88,14 @@ Symbol* install(char *name, Category cat, Type type) {
     s->name = strdup(name);
     s->category = cat;
     s->type = type;
-    s->offset = current_scope->next_offset++;
+    s->level = level;
     s->next = current_scope->symbols;
+
+    if (cat == CAT_VAR) {
+        s->offset = current_scope->next_offset++;
+    } else {
+        s->offset = -1; 
+    }
 
     current_scope->symbols = s;
 

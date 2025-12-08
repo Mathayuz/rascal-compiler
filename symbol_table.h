@@ -42,7 +42,7 @@ extern Scope *current_scope;
 // Funções da tabela de simbolos
 void enter_scope();
 void leave_scope();
-Symbol* install(char *name, Category cat, Type type);
+Symbol* install(char *name, Category cat, Type type, int level);
 Symbol* lookup(char *name);
 Symbol* lookup_local(char *name);
 

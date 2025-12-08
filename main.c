@@ -4,7 +4,7 @@
 #include "rascal_parser.tab.h"
 #include "rascal_ast.h"
 #include "semantics.h"     // << ADICIONADO
-// futuramente: #include "codegen.h"
+#include "rascal_mepa.h"
 
 extern int yylineno;
 extern FILE *yyin;
@@ -47,3 +47,40 @@ int main(int argc, char *argv[]) {
     fclose(myfile);
     return 0;
 }
+
+/*
+int main(int argc, char *argc[]) {
+    // ROTINA PARA TESTAR A GERAÇÃO DE CÓDIGO MEPA
+    if (argc < 2) {
+        fprintf(stderr, "Uso: %s <arquivo_entrada>\n", argv[0]);
+        return 1;
+    }
+
+    FILE *myfile = fopen(argv[1], "r");
+    if (!myfile) {
+        fprintf(stderr, "Erro ao abrir o arquivo: %s\n", argv[1]);
+        return 1;
+    }
+    yyin = myfile;
+
+    if (yyparse() != 0 || ast_root == NULL) {
+        fprintf(stderr, "Parsing failed.\n");
+        fclose(myfile);
+        return 1;
+    }
+
+    printf("Parsing OK.\n");
+
+    printf("\n--- AST ---\n");
+    printAstRoot(ast_root, stdout);
+    printf("\n-----------\n");
+
+    printf("Gerando código MEPA para: %s\n", saida.mep);
+    generate_code(ast_root, saida.mep);
+
+    freeAstRoot(ast_root);
+    fclose(myfile);
+    return 0;
+}
+
+*/
