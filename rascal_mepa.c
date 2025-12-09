@@ -1,6 +1,65 @@
 #include "rascal_mepa.h"
+#include "symbol_table.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// Auxiliary Write Functions
+static int varListSize(VarDeclaration* list) {
+    int count = 0;
+    while (list) {
+        count++;
+        list = list->next;
+    }
+    return count;
+}
+
+static int newLabel(CodeGenContext* ctx) {
+    return ++(ctx->labelCount);
+}
+
+static void writeLabel(CodeGenContext* ctx, int label) {
+    fprintf(ctx->mepaFile, "R%02d: NADA\n", label);
+}
+
+static void writeInstr(CodeGenContext* ctx, const char* op) {
+    fprintf(ctx->mepaFile, "     %s\n", op);
+}
+
+static void writeInstrIntArg(CodeGenContext* ctx, const char* op, int arg) {
+    fprintf(ctx->mepaFile, "     %s %d\n", op, arg);
+}
+
+static void writeInstr2IntArg(CodeGenContext* ctx, const char* op, int arg1, int arg2) {
+    fprintf(ctx->mepaFile, "     %s %d,%d\n", op, arg1, arg2);
+}
+
+static void writeInstrLabelArg(CodeGenContext* ctx, const char* op, int label) {
+    fprintf(ctx->mepaFile, "     %s R%02d\n", op, label);
+}
+
+// Internal declarations
+static void generateProgram(Program* p, CodeGenContext* ctx);
+static void generateBlock(Block* b, CodeGenContext* ctx);
+static void generateVariableDeclaration(VarDeclaration* vd, CodeGenContext* ctx);
+static void generateSubRotDeclaration(SubRotDeclaration* sd, CodeGenContext* ctx);
+static void generateSubRotBlock(SubRotBlock* sb, CodeGenContext* ctx);
+static void generateCommandList(Command* c, CodeGenContext* ctx);
+static void generateCommand(Command* c, CodeGenContext* ctx);
+static void generateAssignCmd(Command* c, CodeGenContext* ctx);
+static void generateProcedureCallCmd(Command* c, CodeGenContext* ctx);
+static void generateReverseExpressions(Expression* expr, CodeGenContext* ctx);
+static void generateConditionalCmd(Command* c, CodeGenContext* ctx);
+static void generateLoopCmd(Command* c, CodeGenContext* ctx);
+static void generateReadCmd(Command* c, CodeGenContext* ctx);
+static void generateWriteCmd(Command* c, CodeGenContext* ctx);
+static void generateExpression(Expression* e, CodeGenContext* ctx);
+static void generateBinaryExpr(Expression* e, CodeGenContext* ctx);
+static void generateUnaryExpr(Expression* e, CodeGenContext* ctx);
+static void generateVarExpr(Expression* e, CodeGenContext* ctx);
+static void generateIntExpr(Expression* e, CodeGenContext* ctx);
+static void generateBooleanExpr(Expression* e, CodeGenContext* ctx);
+static void generateFunctionCallExpr(Expression* e, CodeGenContext* ctx);
 
 // MEPA Code Generation Functions
 void generateCode(Program *root, const char *filename) {
@@ -22,7 +81,7 @@ void generateCode(Program *root, const char *filename) {
     printf("\nMEPA code generated in: %s", filename);
 }
 
-void generateProgram(Program* p, CodeGenContext* ctx) {
+static void generateProgram(Program* p, CodeGenContext* ctx) {
     if (!p) return;
     writeInstr(ctx, "INPP");
     install(p->identifier, CAT_PROGRAM, TYPE_VOID, ctx->currentLevel);
@@ -34,7 +93,7 @@ void generateProgram(Program* p, CodeGenContext* ctx) {
     writeInstr(ctx, "FIM");
 }
 
-void generateBlock(Block* b, CodeGenContext* ctx) {
+static void generateBlock(Block* b, CodeGenContext* ctx) {
     if (!b) return;
     // Variable Declaration Section
     generateVariableDeclaration(b->varDeclarations, ctx);
@@ -62,14 +121,14 @@ void generateBlock(Block* b, CodeGenContext* ctx) {
     }
 }
 
-void generateVariableDeclaration(VarDeclaration *vd, CodeGenContext *ctx) {
+static void generateVariableDeclaration(VarDeclaration *vd, CodeGenContext *ctx) {
     while (vd) {
         install(vd->identifier, CAT_VAR, (vd->type == Int ? TYPE_INT : TYPE_BOOL), ctx->currentLevel);
         vd = vd->next;
     }
 }
 
-void generateSubRotDeclaration(SubRotDeclaration* sd, CodeGenContext* ctx) {
+static void generateSubRotDeclaration(SubRotDeclaration* sd, CodeGenContext* ctx) {
     while (sd) {
         int label = newLabel(ctx);
 
@@ -129,7 +188,7 @@ void generateSubRotDeclaration(SubRotDeclaration* sd, CodeGenContext* ctx) {
     }
 }
 
-void generateSubRotBlock(SubRotBlock* sb, CodeGenContext* ctx) {
+static void generateSubRotBlock(SubRotBlock* sb, CodeGenContext* ctx) {
     if (!sb) return;
     // Allocate Local Variables of Subroutine Block
     generateVariableDeclaration(sb->varDeclarations, ctx); 
@@ -147,14 +206,14 @@ void generateSubRotBlock(SubRotBlock* sb, CodeGenContext* ctx) {
     }
 }
 
-void generateCommandList(Command* c, CodeGenContext* ctx) {
+static void generateCommandList(Command* c, CodeGenContext* ctx) {
     while (c) {
         generateCommand(c, ctx);
         c = c->next;
     }
 }
 
-void generateCommand(Command* c, CodeGenContext* ctx) {
+static void generateCommand(Command* c, CodeGenContext* ctx) {
     if (!c) return;
     switch (c->type) {
         case Assign:      generateAssignCmd(c, ctx); break;
@@ -166,13 +225,13 @@ void generateCommand(Command* c, CodeGenContext* ctx) {
     }
 }
 
-void generateAssignCmd(Command* c, CodeGenContext* ctx) {
+static void generateAssignCmd(Command* c, CodeGenContext* ctx) {
     generateExpression(c->cmdU.assignInfo.expression, ctx);
     Symbol* s = lookup(c->cmdU.assignInfo.identifier);
     writeInstr2IntArg(ctx, "ARMZ", s->level, s->offset);
 }
 
-void generateProcedureCallCmd(Command* c, CodeGenContext* ctx) {
+static void generateProcedureCallCmd(Command* c, CodeGenContext* ctx) {
     char* name = c->cmdU.procCallInfo.identifier;
     Symbol* s = lookup(name);
 
@@ -181,13 +240,13 @@ void generateProcedureCallCmd(Command* c, CodeGenContext* ctx) {
     fprintf(ctx->mepaFile, "     CHPR R%02d,%d\n", s->offset, ctx->currentLevel);
 }
 
-void generateReverseExpressions(Expression* expr, CodeGenContext* ctx) {
+static void generateReverseExpressions(Expression* expr, CodeGenContext* ctx) {
     if (!expr) return;
     generateReverseExpressions(expr->next, ctx);
     generateExpression(expr, ctx);
 }
 
-void generateConditionalCmd(Command* c, CodeGenContext* ctx) {
+static void generateConditionalCmd(Command* c, CodeGenContext* ctx) {
     if (!c->cmdU.condInfo.cmdElse) {
         int label_end = newLabel(ctx);
 
@@ -221,7 +280,7 @@ void generateConditionalCmd(Command* c, CodeGenContext* ctx) {
     }
 }
 
-void generateLoopCmd(Command* c, CodeGenContext* ctx) {
+static void generateLoopCmd(Command* c, CodeGenContext* ctx) {
     int label_loop = newLabel(ctx);
     int label_end = newLabel(ctx);
 
@@ -240,7 +299,7 @@ void generateLoopCmd(Command* c, CodeGenContext* ctx) {
     writeLabel(ctx, label_end);
 }
 
-void generateReadCmd(Command* c, CodeGenContext* ctx) {
+static void generateReadCmd(Command* c, CodeGenContext* ctx) {
     IdentifierList* id = c->cmdU.readInfo.identifiers;
     while(id) {
         writeInstr(ctx, "LEIT");
@@ -251,7 +310,7 @@ void generateReadCmd(Command* c, CodeGenContext* ctx) {
     }
 }
 
-void generateWriteCmd(Command* c, CodeGenContext* ctx) {
+static void generateWriteCmd(Command* c, CodeGenContext* ctx) {
     Expression* e = c->cmdU.writeInfo.expressionList;
     while (e) {
         generateExpression(e, ctx);
@@ -260,11 +319,11 @@ void generateWriteCmd(Command* c, CodeGenContext* ctx) {
     }
 }
 
-void generateExpression(Expression* e, CodeGenContext* ctx) {
+static void generateExpression(Expression* e, CodeGenContext* ctx) {
     if (!e) return;
     switch (e->type) {
         case Binary:    generateBinaryExpr(e, ctx); break;
-        case Unary:     generateUnaryexpr(e, ctx); break;
+        case Unary:     generateUnaryExpr(e, ctx); break;
         case Var:       generateVarExpr(e, ctx); break;
         case ConstInt:  generateIntExpr(e, ctx); break;
         case ConstBool: generateBooleanExpr(e, ctx); break;
@@ -272,7 +331,7 @@ void generateExpression(Expression* e, CodeGenContext* ctx) {
     }
 }
 
-void generateBinaryExpr(Expression* e, CodeGenContext* ctx) {
+static void generateBinaryExpr(Expression* e, CodeGenContext* ctx) {
     generateExpression(e->exprU.binExpr.left, ctx);
     generateExpression(e->exprU.binExpr.right, ctx);
     
@@ -293,7 +352,7 @@ void generateBinaryExpr(Expression* e, CodeGenContext* ctx) {
     }
 }
 
-void generateUnaryexpr(Expression* e, CodeGenContext* ctx) {
+static void generateUnaryExpr(Expression* e, CodeGenContext* ctx) {
     generateExpression(e->exprU.unyExpr.right, ctx);
     switch (e->exprU.unyExpr.operator) {
         case Minus: writeInstr(ctx, "INVR"); break;
@@ -302,20 +361,20 @@ void generateUnaryexpr(Expression* e, CodeGenContext* ctx) {
     }
 }
 
-void generateVarExpr(Expression* e, CodeGenContext* ctx) {
+static void generateVarExpr(Expression* e, CodeGenContext* ctx) {
     Symbol* s = lookup(e->exprU.varExpr.identifier);
     writeInstr2IntArg(ctx, "CRVL", s->level, s->offset);
 }
 
-void generateIntExpr(Expression* e, CodeGenContext* ctx) {
+static void generateIntExpr(Expression* e, CodeGenContext* ctx) {
     writeInstrIntArg(ctx, "CRCT", e->exprU.intExpr.number);
 }
 
-void generateBooleanExpr(Expression* e, CodeGenContext* ctx) {
+static void generateBooleanExpr(Expression* e, CodeGenContext* ctx) {
     writeInstrIntArg(ctx, "CRCT", (e->exprU.boolExpr.boolean == BoolTrue ? 1 : 0));
 }
 
-void generateFunctionCallExpr(Expression* e, CodeGenContext* ctx) {
+static void generateFunctionCallExpr(Expression* e, CodeGenContext* ctx) {
     char* name = e->exprU.funCallExpr.identifier;
     Symbol* s = lookup(name);
 
@@ -324,38 +383,4 @@ void generateFunctionCallExpr(Expression* e, CodeGenContext* ctx) {
     generateReverseExpressions(e->exprU.funCallExpr.expressionList, ctx);
 
     fprintf(ctx->mepaFile, "     CHPR R%02d,%d\n", s->offset, ctx->currentLevel);
-}
-
-// Auxiliary Write Functions
-int varListSize(VarDeclaration* list) {
-    int count = 0;
-    while (list) {
-        count++;
-        list = list->next;
-    }
-    return count;
-}
-
-int newLabel(CodeGenContext* ctx) {
-    return ++(ctx->labelCount);
-}
-
-void writeLabel(CodeGenContext* ctx, int label) {
-    fprintf(ctx->mepaFile, "R%02d: NADA\n", label);
-}
-
-void writeInstr(CodeGenContext* ctx, const char* op) {
-    fprintf(ctx->mepaFile, "     %s\n", op);
-}
-
-void writeInstrIntArg(CodeGenContext* ctx, const char* op, int arg) {
-    fprintf(ctx->mepaFile, "     %s %d\n", op, arg);
-}
-
-void writeInstr2IntArg(CodeGenContext* ctx, const char* op, int arg1, int arg2) {
-    fprintf(ctx->mepaFile, "     %s %d,%d\n", op, arg1, arg2);
-}
-
-void writeInstrLabelArg(CodeGenContext* ctx, const char* op, int label) {
-    fprintf(ctx->mepaFile, "     %s R%02d\n", op, label);
 }
