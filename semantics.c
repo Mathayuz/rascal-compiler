@@ -6,14 +6,12 @@
 #include "rascal_ast.h"
 #include "symbol_table.h"
 
-extern int yylineno;
-
 // Global list containing all subroutines declared in the program
 static SubRotDeclaration *globalSubrotList = NULL;
 
 // Auxliar function for printing semantic error
 static void semanticError(const char *msg) {
-    printf("\nSemantic error in the line %d: %s\n", yylineno, msg);
+    printf("\nSemantic error: %s\n", msg);
     exit(1);
 }
 
