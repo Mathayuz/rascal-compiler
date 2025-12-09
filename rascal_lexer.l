@@ -6,6 +6,8 @@
 #include "rascal_ast.h"
 
 void yyerror(const char *s);
+
+extern int lexical_errors;
 %}
 
 %option noyywrap yylineno nounput noinput
