@@ -10,6 +10,8 @@ extern int yylineno;
 extern FILE *yyin;
 extern Program *ast_root;
 
+int lexical_errors = 0;
+
 int main(int argc, char *argv[]) {
     // Verify arguments
     if (argc < 3) {
@@ -26,7 +28,7 @@ int main(int argc, char *argv[]) {
     yyin = myfile;
 
     // Lexer through Parser with Abstract Syntax Tree Building
-    if (yyparse() != 0 || ast_root == NULL) {
+    if (yyparse() != 0 || ast_root == NULL || lexical_errors > 0) {
         fprintf(stderr, "\nError while parsing.\n");
         fclose(myfile);
         return 1;

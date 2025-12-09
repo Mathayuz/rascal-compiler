@@ -283,5 +283,5 @@ func_call
 %%
 
 void yyerror(const char *s){
-    printf("Erro Sintático na linha %d: %s\n", yylineno, s);
+    printf("\nSyntatic error in line %d: %s\n", yylineno, s);
 }

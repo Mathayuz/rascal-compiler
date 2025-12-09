@@ -61,8 +61,8 @@ ID          {LETTER}({LETTER}|{DIGIT}|_)*
 ","                 {return ',';}
 "."                 {return '.';}
 
-{SPACES}            /* Ignorar espaços, tabulações e quebras de linha */
+{SPACES}            /* Ignore spaces, tabs, and line breaks. */
 
-.                   {printf("Erro léxico na linha %d: símbolo ilegal em '%s'\n", yylineno, yytext);}
+.                   {printf("\nLexical error in line %d: ilegal symbol in '%s'\n", yylineno, yytext); lexical_errors = 1;}
 
 %%
