@@ -3,17 +3,17 @@
 #include <string.h>
 #include "symbol_table.h"
 
-// Escopo atual da tabela
+// Current scope of symbol table
 Scope *current_scope = NULL;
 
-// Cria um novo escopo
+// Creates a new scope
 void enter_scope() {
     Scope *s = (Scope*) malloc(sizeof(Scope));
     s->symbols = NULL;
     s->parent = current_scope;
     s->next_offset = 0;
 
-    if (current_scope == NULL)
+    if (!current_scope)
         s->level = 0;
     else
         s->level = current_scope->level + 1;
@@ -21,15 +21,14 @@ void enter_scope() {
     current_scope = s;
 }
 
-// Remove o escopo atual
+// Destroys the current scope of symbol table
 void leave_scope() {
-    if (current_scope == NULL)
-        return;
+    if (!current_scope) return;
 
     Scope *old = current_scope;
     Symbol *sym = old->symbols;
 
-    while (sym != NULL) {
+    while (sym) {
         Symbol *next = sym->next;
         free(sym->name);
         free(sym);
@@ -40,14 +39,13 @@ void leave_scope() {
     free(old);
 }
 
-// Busca apenas no escopo atual
+// Search only in the current scope
 Symbol* lookup_local(char *name) {
-    if (current_scope == NULL)
-        return NULL;
+    if (!current_scope) return NULL;
 
     Symbol *sym = current_scope->symbols;
 
-    while (sym != NULL) {
+    while (sym) {
         if (strcmp(sym->name, name) == 0)
             return sym;
         sym = sym->next;
@@ -56,13 +54,13 @@ Symbol* lookup_local(char *name) {
     return NULL;
 }
 
-// Busca hierárquica (escopo atual -> anteriores)
+// Hierarchical search (current scopes -> previous scopes)
 Symbol* lookup(char *name) {
     Scope *s = current_scope;
 
-    while (s != NULL) {
+    while (s) {
         Symbol *sym = s->symbols;
-        while (sym != NULL) {
+        while (sym) {
             if (strcmp(sym->name, name) == 0)
                 return sym;
             sym = sym->next;
@@ -73,14 +71,13 @@ Symbol* lookup(char *name) {
     return NULL;
 }
 
-// Instala um novo simbolo no escopo atual
+// Insert a new symbol in the current scope
 Symbol* install(char *name, Category cat, Type type, int level) {
-    if (current_scope == NULL)
-        return NULL;
+    if (!current_scope) return NULL;
 
     Symbol *exist = lookup_local(name);
-    if (exist != NULL) {
-        printf("Erro semântico: identificador '%s' declarado duas vezes no mesmo escopo\n", name);
+    if (exist) {
+        printf("\nSemantic error: identifier '%s' declared twice in the same scope.\n", name);
         exit(1);
     }
 

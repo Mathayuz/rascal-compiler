@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     printAstRoot(ast_root, stdout);
 
     // Semantic Analysis
-    semantic_check(ast_root);
+    semanticCheck(ast_root);
     printf("\nSuccessful semantic analysis.\n");
 
     // Generate Object MEPA Code

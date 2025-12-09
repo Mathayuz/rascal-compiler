@@ -4,7 +4,7 @@
 #include "rascal_ast.h"
 #include "symbol_table.h"
 
-// Executa a análise semântica
-void semantic_check(Program *program);
+// Executes semantic analysis
+void semanticCheck(Program *program);
 
 #endif

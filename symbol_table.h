@@ -1,7 +1,7 @@
 #ifndef SYMBOL_TABLE_H
 #define SYMBOL_TABLE_H
 
-// Tipos primitivos
+// Symbol Types
 typedef enum {
     TYPE_INT,
     TYPE_BOOL,
@@ -9,7 +9,7 @@ typedef enum {
     TYPE_UNKNOWN
 } Type;
 
-// Categorias de identificadores
+// Symbol Categories
 typedef enum {
     CAT_VAR,
     CAT_PARAM,
@@ -18,7 +18,7 @@ typedef enum {
     CAT_PROGRAM
 } Category;
 
-// Estrutura de um simbolo
+// Symbol Struct
 typedef struct Symbol {
     char *name;
     Category category;
@@ -28,7 +28,7 @@ typedef struct Symbol {
     struct Symbol *next;
 } Symbol;
 
-// Estrutura de um escopo
+// Scope Struct
 typedef struct Scope {
     Symbol *symbols;
     struct Scope *parent;
@@ -36,10 +36,10 @@ typedef struct Scope {
     int level;
 } Scope;
 
-// Ponteiro para o escopo atual
+// Pointer to current scope
 extern Scope *current_scope;
 
-// Funções da tabela de simbolos
+// Symbol table management functions
 void enter_scope();
 void leave_scope();
 Symbol* install(char *name, Category cat, Type type, int level);
