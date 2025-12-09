@@ -51,16 +51,16 @@ main.o: main.c rascal_ast.h rascal_parser.tab.h semantics.h rascal_mepa.h
 
 # Utils
 clean:
-	rm -f rascalc *.o rascal_parser.tab.* lex.yy.c parser.output
+	rm -f rascalc *.o rascal_parser.tab.* lex.yy.c *.mep
 
 # Quick tests
 run: rascalc
-	./rascalc teste.ras
+	./rascalc teste.ras saida.mep
 
-runOK:
-	./rascalc exemplo1.ras
+runOK: rascalc
+	./rascalc exemplo1.ras saida_ok.mep
 
-runErro:
-	./rascalc exemplo_erro.ras
+runErro: rascalc
+	./rascalc exemplo_erro.ras saida_erro.mep
 
 .PHONY: all clean run runOK runErro
