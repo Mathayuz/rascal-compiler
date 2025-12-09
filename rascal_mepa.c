@@ -6,11 +6,11 @@
 void generateCode(Program *root, const char *filename) {
     CodeGenContext ctx;
     ctx.mepaFile = fopen(filename, "w");
-    ctx.labelCount = 0;
+    ctx.labelCount = -1;
     ctx.currentLevel = 0;
 
     if (!ctx.mepaFile) {
-        perror("Erro ao abrir arquivo de saída");
+        perror("\nError opening mepa object file");
         return;
     }
 
@@ -19,7 +19,7 @@ void generateCode(Program *root, const char *filename) {
     leave_scope();
 
     fclose(ctx.mepaFile);
-    printf("Código MEPA gerado em: %s\n", filename);
+    printf("\nMEPA code generated in: %s", filename);
 }
 
 void generateProgram(Program* p, CodeGenContext* ctx) {
@@ -106,7 +106,10 @@ void generateSubRotDeclaration(SubRotDeclaration* sd, CodeGenContext* ctx) {
         if (sd->type == Func) {
             int ret_offset = - (5 + n_params);
             Symbol* ret_symbol = install(sd->subrotU.funcInfo.identifier, CAT_VAR, (sd->subrotU.funcInfo.returnType == Int ? TYPE_INT : TYPE_BOOL), ctx->currentLevel);
-            if(ret_symbol) ret_symbol->offset = ret_offset;
+            if (ret_symbol) {
+                ret_symbol->offset = ret_offset;
+                current_scope->next_offset--; 
+            }
         }
 
         // Create Subroutine Block
@@ -175,7 +178,7 @@ void generateProcedureCallCmd(Command* c, CodeGenContext* ctx) {
 
     generateReverseExpressions(c->cmdU.procCallInfo.expressionList, ctx);
 
-    fprintf(ctx->mepaFile, "\tCHPR R%d, %d\n", s->offset, ctx->currentLevel);
+    fprintf(ctx->mepaFile, "     CHPR R%02d,%d\n", s->offset, ctx->currentLevel);
 }
 
 void generateReverseExpressions(Expression* expr, CodeGenContext* ctx) {
@@ -185,25 +188,37 @@ void generateReverseExpressions(Expression* expr, CodeGenContext* ctx) {
 }
 
 void generateConditionalCmd(Command* c, CodeGenContext* ctx) {
-    int label_else = newLabel(ctx);
-    int label_end = newLabel(ctx);
+    if (!c->cmdU.condInfo.cmdElse) {
+        int label_end = newLabel(ctx);
 
-    // Conditional Expression
-    generateExpression(c->cmdU.condInfo.condExpression, ctx);
-    writeInstrLabelArg(ctx, "DSVF", label_else);
+        // Conditional Expression
+        generateExpression(c->cmdU.condInfo.condExpression, ctx);
+        writeInstrLabelArg(ctx, "DSVF", label_end);
 
-    // If:
-    generateCommand(c->cmdU.condInfo.cmdIf, ctx);
-    writeInstrLabelArg(ctx, "DSVS", label_end);
+        // If:
+        generateCommandList(c->cmdU.condInfo.cmdIf, ctx);
 
-    // Else:
-    writeLabel(ctx, label_else);
-    if (c->cmdU.condInfo.cmdElse) {
-        generateCommand(c->cmdU.condInfo.cmdElse, ctx);
+        // End:
+        writeLabel(ctx, label_end);
+    } else {
+        int label_end = newLabel(ctx);
+        int label_else = newLabel(ctx);
+
+        // Conditional Expression
+        generateExpression(c->cmdU.condInfo.condExpression, ctx);
+        writeInstrLabelArg(ctx, "DSVF", label_else);
+
+        // If:
+        generateCommandList(c->cmdU.condInfo.cmdIf, ctx);
+        writeInstrLabelArg(ctx, "DSVS", label_end);
+
+        // Else:
+        writeLabel(ctx, label_else);
+        generateCommandList(c->cmdU.condInfo.cmdElse, ctx);
+
+        // End:
+        writeLabel(ctx, label_end);
     }
-
-    // After
-    writeLabel(ctx, label_end);
 }
 
 void generateLoopCmd(Command* c, CodeGenContext* ctx) {
@@ -217,7 +232,7 @@ void generateLoopCmd(Command* c, CodeGenContext* ctx) {
     writeInstrLabelArg(ctx, "DSVF", label_end);
 
     // Loop Body
-    generateCommand(c->cmdU.loopInfo.cmdLoop, ctx);
+    generateCommandList(c->cmdU.loopInfo.cmdLoop, ctx);
 
     // Loop Check
     writeInstrLabelArg(ctx, "DSVS", label_loop);
@@ -308,7 +323,7 @@ void generateFunctionCallExpr(Expression* e, CodeGenContext* ctx) {
 
     generateReverseExpressions(e->exprU.funCallExpr.expressionList, ctx);
 
-    fprintf(ctx->mepaFile, "\tCHPR R%d, %d\n", s->offset, ctx->currentLevel);
+    fprintf(ctx->mepaFile, "     CHPR R%02d,%d\n", s->offset, ctx->currentLevel);
 }
 
 // Auxiliary Write Functions
@@ -326,21 +341,21 @@ int newLabel(CodeGenContext* ctx) {
 }
 
 void writeLabel(CodeGenContext* ctx, int label) {
-    fprintf(ctx->mepaFile, "R%d: NADA\n", label);
+    fprintf(ctx->mepaFile, "R%02d: NADA\n", label);
 }
 
 void writeInstr(CodeGenContext* ctx, const char* op) {
-    fprintf(ctx->mepaFile, "\t%s\n", op);
+    fprintf(ctx->mepaFile, "     %s\n", op);
 }
 
 void writeInstrIntArg(CodeGenContext* ctx, const char* op, int arg) {
-    fprintf(ctx->mepaFile, "\t%s %d\n", op, arg);
+    fprintf(ctx->mepaFile, "     %s %d\n", op, arg);
 }
 
 void writeInstr2IntArg(CodeGenContext* ctx, const char* op, int arg1, int arg2) {
-    fprintf(ctx->mepaFile, "\t%s %d, %d\n", op, arg1, arg2);
+    fprintf(ctx->mepaFile, "     %s %d,%d\n", op, arg1, arg2);
 }
 
 void writeInstrLabelArg(CodeGenContext* ctx, const char* op, int label) {
-    fprintf(ctx->mepaFile, "\t%s R%d\n", op, label);
+    fprintf(ctx->mepaFile, "     %s R%02d\n", op, label);
 }

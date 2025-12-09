@@ -13,25 +13,25 @@ extern Program *ast_root;
 int main(int argc, char *argv[]) {
     // Verify arguments
     if (argc < 3) {
-        fprintf(stderr, "Uso: %s <arquivo_entrada> <arquivo_saida>\n", argv[0]);
+        fprintf(stderr, "\nUsage: %s <rascal_file> <mepa_object>\n", argv[0]);
         return 1;
     }
 
     // Open file
     FILE *myfile = fopen(argv[1], "r");
     if (!myfile) {
-        fprintf(stderr, "Erro ao abrir o arquivo: %s\n", argv[1]);
+        fprintf(stderr, "\nError opening rascal file: %s\n", argv[1]);
         return 1;
     }
     yyin = myfile;
 
     // Lexer through Parser with Abstract Syntax Tree Building
     if (yyparse() != 0 || ast_root == NULL) {
-        fprintf(stderr, "Erro na análise Léxica/Sintática.\n");
+        fprintf(stderr, "\nError while parsing.\n");
         fclose(myfile);
         return 1;
     }
-    printf("Análise Sintática Ok.\n");
+    printf("\nParsing successful.\n");
 
     // Print Abstract Syntax Tree
     printf("\nPrinting AST:\n");
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
     // Semantic Analysis
     semantic_check(ast_root);
-    printf("Semantic analysis OK.\n");
+    printf("\nSuccessful semantic analysis.\n");
 
     // Generate Object MEPA Code
     generateCode(ast_root, argv[2]);
